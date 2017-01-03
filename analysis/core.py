@@ -1,3 +1,11 @@
+"""
+.. module:: core
+    :synopsis: The core analysis tools
+
+.. moduleauthor:: Joshua Rehak <jsrehak@gmail.com>
+
+"""
+
 from pyne import serpent 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -140,7 +148,39 @@ class ParamData:
         return np.array([data.get_fom(label, reshape = isMatrix)[:,grp] for data in self.dataSets])
 
 class Analyzer:
+    """This class is used to analyze and compare data across multiple surface tracking
+    and WDT tracking values
+
+    :param st_vals: The surface tracking values to be analyzed
+    :type  st_vals: list
+
+    :param wdt_vals: The weighted delta tracking values to be analyzed
+    :type  wdt_vals: list
+
+    :param base_dir: The base directory where the `wdt_runs` repo is
+    :type  base_dir: string
+
+    :param base_st: The base value of the surface tracking threshold \
+                    used when calculating relative improvement, defaults to the
+                    Serpent default of 0.1.
+    :type base_st: float
+
+    :param base_wdt: The base value of the weighted delta-tracking threshold \
+                     used when calculating relative improvement, defaults to 0.1.
+    :type base_wdt: float
+    
+    .. note:: If `base_st` and `base_wdt` are not specified, the base \
+              case will default to no weighted delta-tracking.
+
+    """
+    
     def __init__(self, st_vals, wdt_vals, base_dir, base_st=0.1, base_wdt=0.1):
+        """Initializes the analyzer, this will automatically ingest the
+        Serpent output files to be analyzed.
+
+        
+
+        """
         # Creates an analyzer to compare the parameters in st_vals and wdt_vals to a given
         # base case. The base case is assumed to be no WDT but it can be changed
         self.dataSets = []

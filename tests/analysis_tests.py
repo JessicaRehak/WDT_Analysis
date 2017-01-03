@@ -35,8 +35,8 @@ class TestClass:
                                                  2.97807490e+05, 1.91276486e+05, 5.12316627e+06,
                                                  1.77815613e+00]])
         
-        inf_flx == self.test_analyzer.data_frame('INF_FLX',rel=False,
-                                            mean=True,style=False).as_matrix()
+        assert_true(np.allclose(inf_flx,self.test_analyzer.data_frame('INF_FLX',rel=False,
+                                                                      mean=True,style=False).as_matrix()))
     
     def test_data_frames_mean_rel(self):
         # Mean
@@ -47,8 +47,8 @@ class TestClass:
                                             0.03098749, 1.16513378, -0.7005797 ,
                                             1.02170949, 14.76921115]])
         
-        inf_flx == self.test_analyzer.data_frame('INF_FLX',rel=True,
-                                            mean=True,style=False).as_matrix()
+        assert_true(np.allclose(inf_flx, self.test_analyzer.data_frame('INF_FLX',rel=True,
+                                            mean=True,style=False).as_matrix()))
 
     def test_data_frames_stdev(self):
         inf_flx = np.array([[ 1.00000000e-01, 1.00000000e-01,
@@ -62,7 +62,7 @@ class TestClass:
                                                  3.56941238e+05, 1.98267608e+05, 6.26077204e+05,
                                                  1.63630052e+05, 1.74524251e+05, 7.61463285e+06,
                                                  2.31413532e+00]])
-        inf_flx == self.test_analyzer.data_frame('INF_FLX',rel=False,mean=False,style=False).as_matrix()
+        assert_true(np.allclose(inf_flx, self.test_analyzer.data_frame('INF_FLX',rel=False,mean=False,style=False).as_matrix()))
 
     def test_data_frames_stdev_rel(self):
         inf_flx = np.array([[ 0.1 , 0.1 , 0.  , 0.  , 0.  , 0.  , 0.
@@ -71,12 +71,12 @@ class TestClass:
                                                                              6.90644622, 5.03504843, 0.54352269, -0.36787552, 0.99399656,
                                                                              -0.90660948, 1.07567316, 53.41595814]])
 
-        inf_flx == self.test_analyzer.data_frame('INF_FLX',rel=True,mean=False,style=False).as_matrix()
+        assert_true(np.allclose(inf_flx, self.test_analyzer.data_frame('INF_FLX',rel=True,mean=False,style=False).as_matrix()))
 
     def test_histogram(self):
         histogram = np.array([[3],[3]])
-        histogram == self.test_analyzer.histogram(['INF_FLX','INF_TOT','INF_ABS'],mean=True).as_matrix()
+        assert_true(np.all(histogram == self.test_analyzer.histogram(['INF_FLX','INF_TOT','INF_ABS'],mean=True).as_matrix()))
 
     def test_histogram_stdev(self):
         histogram = np.array([[3],[3]])
-        histogram == self.test_analyzer.histogram(['INF_FLX','INF_TOT','INF_ABS'],mean=False).as_matrix()
+        assert_true(np.all(histogram == self.test_analyzer.histogram(['INF_FLX','INF_TOT','INF_ABS'],mean=False).as_matrix()))

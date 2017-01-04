@@ -31,7 +31,12 @@ sys.path.insert(0, os.path.abspath('..'))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.autodoc',
-    'sphinx.ext.mathjax']
+              'sphinx.ext.mathjax',
+              'sphinx.ext.intersphinx']
+
+# Intersphynx mapping
+intersphinx_mapping = {'python': ('https://docs.python.org/2', None),
+'pandas': ('http://pandas.pydata.org/pandas-docs/stable', None)}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

@@ -149,7 +149,7 @@ class ParamData:
 
 class Analyzer:
     """This class is used to analyze and compare data across multiple surface tracking
-    and WDT tracking values
+    and WDT tracking values.
 
     :param st_vals: The surface tracking values to be analyzed
     :type  st_vals: list
@@ -198,6 +198,22 @@ class Analyzer:
         self.n = self.dataSets[0].n
     
     def histogram(self,labels,mean=True):
+        """ Compares a list of serpent output parameters across all the data sets stored
+        in the analyzer. For each parameter specified, the top five ST/WDT
+        combinations are identified. Returns a histogram showing the ST/WDT
+        combinations that were in the top five the most times.
+
+        :param labels: a list of serpent output parameters to be compared
+        :type labels: list of strings
+
+        :param mean: if `True`, compares the mean FOM for each output parameter. Otherwise \
+                     compares the standard deviation.
+        :type mean: bool
+
+        :returns: :class:`pandas.DataFrame`
+        
+        """
+        
         histogram = pd.DataFrame()
         for label in labels:
             if mean:
@@ -209,7 +225,24 @@ class Analyzer:
         
         
     def data_frame(self,label,rel=True,mean=True,style=True):
-        # Returns a dataframe with the data in it for all the groups
+        """Returns a DataFrame with the selected serpent output parameter
+        for all groups.
+
+        :param label: the desired Serpent output parameter.
+        :type label: string
+
+        :param rel: returns relative improvement if `True` or absolute values \
+                    if `False`.
+        :type rel: bool
+
+        :param mean: default True, If mean should be returned or standard deviation
+        :type mean: bool
+
+        :param style: returns an html :class:`pandas.formats.style.Styler` object if `True` with color \
+                      coding. If `False`, returns a :class:`pandas.DataFrame`.
+        :type style: bool
+
+        """
         
         def color_grad(val):
             if val < 0:
@@ -291,6 +324,7 @@ class Analyzer:
             return FOM_DF
         
     def plot_setup(self,xlabel,ylabel):
+            
         self.base_color = ([0.0,107.0/255,164.0/255])
         self.other_color = ([1.0,128.0/255,14.0/255])
         plt.figure(figsize=(12, 9))
@@ -304,7 +338,15 @@ class Analyzer:
         plt.ylabel(ylabel,fontsize=16)
         plt.xlabel(xlabel,fontsize=16)
         
-    def plot_cpu(self,st_th, st_base = 0.1, wdt_base = 0.1):
+    def plot_cpu(self,st_th):
+        """ Plots CPU time against weighted delta-tracking threshold for a given
+        surface tracking threshold, this will be shown relative to the base case
+        specified when the analyzer was created.
+
+        :param st_th: the surface tracking threshold of interest.
+        :type st_th: float
+       
+        """
 
         self.plot_setup('WDT Threshold','Relative Difference in Total CPU Time')
         
@@ -317,9 +359,30 @@ class Analyzer:
         plt.xlim([0,1.1])
         return plt
         
-    def plot(self,label, st_ths, wdt_ths, st_base = 0.1, wdt_base = 0.1):
-        # Plots the given WDT/SH threshold pair against the base case, defaulting to 0 WDT
+    def plot(self,label, st_th, wdt_th, st_base = 0.1, wdt_base = 0.1):
+        """ Plots a given Serpent parameter by energy group, for a given
+        combination of ST/WDT threshold. The plot uses the mean
+        values for the points and standard deviations for error bars. Also
+        plots a base case, defaulting to no WDT.
 
+        :param label: the desired Serpent output parameter
+        :type label: string
+
+        :param st_th: the surface tracking threshold to plot.
+        :type st_ths: float
+
+        :param wdt_th: the weighted delta-tracking threshold to plot.
+        :type wdt_th: float
+
+        :param st_base: default 0.1, surface tracking threshold for the base case.
+        :type st_base: float
+
+        :param wdt_base: default 0.1, weighted delta-tracking threshold for the base case.
+        :type wdt_base: float
+
+        """
+
+        
         # Ensure that the axis ticks only show up on the bottom and left of the plot.  
         # Ticks on the right and top of the plot are generally unnecessary chartjunk.  
         self.plot_setup('Neutron Group','Figure of Merit')
@@ -327,12 +390,21 @@ class Analyzer:
         for data in self.dataSets:
             if data.st_th == st_base and data.wdt_th == wdt_base:
                 fom = data.fom_stat(label)
-                plt.errorbar(range(1,self.n+1),fom[0,:],yerr=fom[1,:],label=str(data.st_th)+'/'+str(data.wdt_th),fmt='^', ms=6, capthick=1,mec=self.base_color, color=self.base_color, capsize=5)
+                plt.errorbar(range(1,self.n+1), fom[0,:],
+                             yerr=fom[1,:],
+                             label=str(data.st_th)+'/'+str(data.wdt_th),
+                             fmt='^', ms=6,
+                             capthick=1,mec=self.base_color,
+                             color=self.base_color, capsize=5)
                 
         for data in self.dataSets:
-            if data.st_th in st_ths and data.wdt_th in wdt_ths:
+            if data.st_th == st_th and data.wdt_th == wdt_th:
                 fom = data.fom_stat(label)
-                plt.errorbar(range(1,self.n+1),fom[0,:],yerr=fom[1,:],label=str(data.st_th)+'/'+str(data.wdt_th),fmt='o', ms=6,capthick=1,mec=self.other_color, color=self.other_color, capsize=10)
+                plt.errorbar(range(1,self.n+1),fom[0,:],yerr=fom[1,:],
+                             label=str(data.st_th)+'/'+str(data.wdt_th),
+                             fmt='o',
+                             ms=6,capthick=1,mec=self.other_color,
+                             color=self.other_color, capsize=10)
 
         plt.yscale('log')
 

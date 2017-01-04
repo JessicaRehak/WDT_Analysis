@@ -17,6 +17,14 @@ import pandas as pd
 from IPython.display import display, HTML
 
 class DataSet():
+    """An object containing the data from a Serpent 2 output file
+    (`_res.m`). When created, it will seek the provided filename and
+    ingest all the data, stored in dictionary format.
+
+    :param file_name: filename to be ingested.
+    :type file_name: string
+    """
+    
     def __init__(self,file_name):
         assert os.path.exists(file_name), "File does not exist"
         self.data = serpent.parse_res(file_name)
@@ -24,15 +32,37 @@ class DataSet():
         self.cpu = self.data['TOT_CPU_TIME'][0]
         
     def get_cpu(self):
+        """Returns a float with the total CPU time"""
         return self.cpu
     
     def get_filename(self):
+        """Returns a string with the filename"""
         return self.filename
     
     def all_data(self):
-        return self.dat
+        """Returns the dictionary with all the `res.m` data"""
+        return self.data
     
     def get_data(self, label, err = False, reshape = False):
+        """Returns an array with the specified output data,
+        either the values themselves or their associated error.
+        
+        :param label: the desired Serpent output parameter.
+        :type label: string
+
+        :param err: If False (default), returns the actual values of \
+                    the specified parameter, otherwise returns the \
+                    error associated.
+        :type err: bool, optional
+
+        :param reshape: If True, attempts to reshape the specified data \
+                        into a matrix, such as for scattering matrices.
+        :type reshape: bool, optional
+
+        :returns: :any:`numpy.array` of dimension two.
+
+        """
+        
         # Returns the data contained in the res_m field labeled with label
         try:
             data = self.__get_val__(self.data[label],err)
@@ -44,6 +74,26 @@ class DataSet():
             raise KeyError('Invalid serpent2 res_m label')
             
     def get_fom(self, label, reshape=False):
+        """Returns an array with the FOM for the the specified output
+        parameter. Total CPU time :math:`T` in minutes, and the error
+        :math:`\sigma` is read directly from the file. The FOM is
+        calculated using:
+
+        .. math::
+
+           1/(\sigma^2 T)
+        
+        :param label: the desired Serpent output parameter.
+        :type label: string
+
+        :param reshape: if False (default), returns an array, otherwise \
+                        attempts to reshape into a square matrix.
+        :type reshape: bool
+
+        
+        
+        """
+        
         try:
             data = []
             errors = self.__get_val__(self.data[label],err = True)
@@ -78,7 +128,8 @@ class DataSet():
         else:
             n = np.sqrt(shape[1])
             if n.is_integer():
-                return np.reshape(array,[n,n])
+                n = int(n)
+                return np.reshape(array,(n,n))
             else:
                 warnings.warn('This does not appear to be a square matrix, skipping reshape')
                 return array

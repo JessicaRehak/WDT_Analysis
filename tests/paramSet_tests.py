@@ -32,3 +32,20 @@ class TestClass:
                                   1752105.49208766, 84080.79577542]])
         ok_(np.allclose(inf_flx, self.data.fom_stat('INF_FLX')))
 
+    def test_ParamData_mat_stat_shape(self):
+        """ ParamData matrix statistics should return the correct shape matrix """
+        eq_(np.shape(self.data.mat_stat('INF_SP0')),(11,11))
+
+    def test_ParamData_mat_stat_mean_value(self):
+        """ ParamData matrix statistics should return the correct mean values """
+        eq_(self.data.mat_stat('INF_SP0')[0,0], 322628.81124076847)
+        ok_(np.allclose(self.data.mat_stat('INF_SP0')[3,3], 5203063133.0263014))
+        eq_(self.data.mat_stat('INF_SP0')[7,1], 0)
+        ok_(np.allclose(self.data.mat_stat('INF_SP0')[6,6], 43613021.7687))
+
+    def test_ParamData_mat_stat_stdv_value(self):
+        """ ParamData matrix statistics should return the correct stdv values """
+        ok_(np.allclose(self.data.mat_stat('INF_SP0', mean = False)[0,0],229881.88117910567))
+        ok_(np.allclose(self.data.mat_stat('INF_SP0', mean = False)[2,2],6683893584.0180454))
+        ok_(np.allclose(self.data.mat_stat('INF_SP0', mean = False)[6,3], 0))
+        ok_(np.allclose(self.data.mat_stat('INF_SP0', mean = False)[8,9],452518.24176970578))

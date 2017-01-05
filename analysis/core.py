@@ -65,7 +65,8 @@ class DataSet():
         
         # Returns the data contained in the res_m field labeled with label
         try:
-            data = self.__get_val__(self.data[label],err)
+            #data = self.__get_val__(self.data[label],err)
+            data = self.__get_val__(label,err)
             if reshape:
                 return self.__reshape__(data)
             else:
@@ -81,7 +82,11 @@ class DataSet():
 
         .. math::
 
-           1/(\sigma^2 T)
+           FOM = 1/(\sigma^2 T)
+
+        If there is no error with the associated output parameter (such as
+        Total CPU time) or if the error associated with a parameter is
+        0, returns 0.
         
         :param label: the desired Serpent output parameter.
         :type label: string
@@ -89,14 +94,13 @@ class DataSet():
         :param reshape: if False (default), returns an array, otherwise \
                         attempts to reshape into a square matrix.
         :type reshape: bool
-
-        
         
         """
         
         try:
             data = []
-            errors = self.__get_val__(self.data[label],err = True)
+            #errors = self.__get_val__(self.data[label],err = True)
+            errors = self.__get_val__(label,err = True)
             for error in errors[0]:
                 if error != 0:
                     data.append(1.0/(self.cpu*pow(error,2)))
@@ -110,11 +114,12 @@ class DataSet():
         except KeyError:
             raise KeyError('Invalid serpent2 res_m label')
     
-    def __get_val__(self,array, err = False):
+    def __get_val__(self,label, err = False):
+        array = self.data[label]
         shape = np.shape(array)
         if shape == (1,1) or len(shape) == 1:
             if err:
-                return np.array([0])
+                return np.array([0],ndmin=2)
             return np.array(array,ndmin=2)
         else:
             return np.array([array[0,i] for i in range(shape[1]) if i % 2 == err],ndmin=2)
@@ -135,6 +140,19 @@ class DataSet():
                 return array
 
 class ParamData:
+    """ An object containing all the :class:`analysis.core.DataSet` objects for a particular
+    set of surface tracking and weighted-delta tracking threshold values.
+    When created, it will find all the `_res.m` files in the appropriate
+    directory.
+
+    :param st_th: the desired surface tracking threshold
+    :type st_th: float
+    :param wdt_th: the desired weighted delta-tracking threshold
+    :type wdt_th: float
+    :param base_dir: the location of the `wdt_runs` repo
+    :type base_dir: string
+    
+    """
     def __init__(self, st_th, wdt_th, base_dir):
         # Generate directory name and verify existence
         dir_name = base_dir + "wdt_runs/S0" + str("%03.f" % (st_th*1000)) + "/W" + str("%04.f" % (wdt_th*1000)) + "/runs/"
@@ -157,13 +175,31 @@ class ParamData:
         self.wdt_th = wdt_th
         
     def cpu(self):
+        """Returns an array with the mean and standard deviation of total CPU
+        time for the ten simulations. The first element of the array is
+        the mean, and second is the standard deviation.
+
+        :returns: :class:`numpy.array`
+
+        """
         cpu = np.zeros([2,1])
         cpu[0,0] = np.mean([data.get_cpu() for data in self.dataSets])
         cpu[1,0] = np.std([data.get_cpu() for data in self.dataSets])
         return cpu
         
     def fom_stat(self, label, plot=False):
-        fom = np.zeros([2,self.n])
+        """ For the specified parameter, this returns numpy array in which
+        the first row contains the mean FOM from the ten simulations for
+        each energy group. The second row contains the standard deviation
+        for those mean FOM values.
+
+        :param label: specifies the Serpent 2 output parameter.
+        :type label: string
+        :param plot: If True, will plot the FOM by energy group.
+        :type plot: bool
+
+        """
+        fom = np.zeros([2,self.n]) 
         # Vector quantity
         for i in range(self.n):
             group_fom = self.__group_fom__(label,i)
@@ -176,27 +212,52 @@ class ParamData:
             plt.xlabel('Group')
         return fom
     
-    def mat_stat(self, label, grp, plot=False):
-        fom = np.zeros([2,self.n])
-        group_fom = self.__group_fom__(label, grp-1,isMatrix = True)
-        for j in range(self.n):
-            fom[0,j] = np.mean(group_fom[:,j])
-            fom[1,j] = np.std(group_fom[:,j])
-        if plot:
-            plt.errorbar(range(1,self.n+1),fom[0,:], fmt='.',yerr=fom[1,:])
-            plt.title('Inscattering cross-section for group' + str(grp))
-            plt.yscale('log')
-            plt.ylabel('FOM')
-            plt.xlabel('Source Group')
-            plt.show
+    def mat_stat(self, label, mean=True):
+        """For the specified matrix parameter (such as scattering matrices),
+        this returns a numpy array of the same shape of the parameter
+        matrix. Each entry in this matrix is the mean (or standard deviation)
+        FOM for that entry of the parameter's matrix.
+
+        .. note: The mean is calculated only using non-zero FOM values \
+                 as a 0 FOM indicates that not enough statistics were \
+                 collected to produce an error.
+
+        :param label: specifies the Serpent 2 output parameter.
+        :type label: string
+
+        :param mean: if True (default) returns the mean FOM, otherwise returns \
+                     the standard deviation of the FOM.
+        :type mean: bool
+
+        """
+        fom = np.zeros([self.n,self.n])
+
+        #list of numpy arrays
+        all_data = [data.get_fom(label, reshape = True) for data in self.dataSets]
+
+        for i in range(self.n):
+            for j in range(self.n):
+                if mean:
+                    fom[i,j] = self.__nz_mean__(np.array([d[i,j] for d in all_data]))
+                else:
+                    fom[i,j] = np.std(np.array([d[i,j] for d in all_data]))
         return fom
-    
-    def __group_vals__(self, label, grp, err = False, isMatrix = False):
+                                                
+    def __nz_mean__(self, a):
+        """ Returns the mean of the non-zero elements """
+        nz = np.count_nonzero(a)
+        if nz == 0:
+            return 0
+        else:
+            return np.sum(a)/nz
+        
+        
+    #def __group_vals__(self, label, grp, err = False, isMatrix = False):
         # Returns the values of label for each run for that group
-        return np.array([data.get_data(label, reshape = isMatrix, err = err)[:,grp] for data in self.dataSets])
+    #    return np.array([data.get_data(label, reshape = isMatrix, err = err)[:,grp] for data in self.dataSets])
     
-    def __group_fom__(self, label, grp, isMatrix = False):
-        return np.array([data.get_fom(label, reshape = isMatrix)[:,grp] for data in self.dataSets])
+    def __group_fom__(self, label, grp):
+        return np.array([data.get_fom(label)[:,grp] for data in self.dataSets])
 
 class Analyzer:
     """This class is used to analyze and compare data across multiple surface tracking

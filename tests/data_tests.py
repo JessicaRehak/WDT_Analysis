@@ -53,3 +53,24 @@ class TestClass:
     def test_DataSet_FOM_of_constant(self):
         """ Requesting the FOM of a constant should return 0 """
         eq_(0, self.data.get_fom('TOT_CPU_TIME'))
+
+    def test_DataSet_FOM_values(self):
+        """ DataSet should return correct value when calculating FOM """
+        fom = np.array([[ 15578.97788826, 133112.68680858,
+                          140210.80099436, 133112.68680858, 147892.18161859,
+                          114775.73505434, 140210.80099436, 258245.40387226,
+                          1198014.18127723, 277728.93914383, 56240.11017663]])
+        ok_(np.allclose(fom, self.data.get_fom('INF_FLX')))
+
+    def test_DataSet_FOM_reshape_shape(self):
+        """ DataSet should return the correct shape when calculating
+        FOM using reshape """
+
+        eq_((11,11), np.shape(self.data.get_fom('INF_SP0',reshape=True)))
+    def test_DataSet_FOM_reshape_values(self):
+        """ DataSet should return the correct values when calculating FOM using reshape """
+        fom = np.array([ 2.77728939e+05, 6.23159116e+04,
+                         8.52596187e+01, 2.02464397e-02, 0.00000000e+00,
+                         0.00000000e+00, 0.00000000e+00, 0.00000000e+00,
+                         0.00000000e+00, 0.00000000e+00, 0.00000000e+00])
+        ok_(np.allclose(fom, self.data.get_fom('INF_SP0', reshape=True)[0]))

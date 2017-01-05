@@ -1,4 +1,4 @@
-Documentation for the WDT Analysis toolkit
+Serpent 2 Output Analysis
 ******************************************
 core
 ====================

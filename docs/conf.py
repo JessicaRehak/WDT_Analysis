@@ -34,10 +34,11 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.mathjax',
               'sphinx.ext.intersphinx']
 
-# Intersphynx mapping
+# Intersphinx mapping
 intersphinx_mapping = {'python': ('https://docs.python.org/2', None),
                        'pandas': ('http://pandas.pydata.org/pandas-docs/stable', None),
-                       'numpy' : ('https://docs.scipy.org/doc/numpy-1.10.0/', None)}
+                       'numpy' : ('https://docs.scipy.org/doc/numpy-1.10.0/', None),
+                       'matplotlib' : ('http://matplotlib.org/', None)}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

@@ -245,10 +245,10 @@ class ParamData:
                     fom[i,j] = np.std(np.array([d[i,j] for d in all_data]))
         if plot:
             logdata = np.where(fom > 0, np.log(fom), np.zeros(np.shape(fom)))
-            plt.imshow(logdata, interpolation='none')
+            im = plt.imshow(logdata, interpolation='none')
             plt.title(label + " for ST: " + str(self.st_th) + " WDT: "
                       + str(self.wdt_th), size=10)
-            plt.colorbar()
+            plt.colorbar(im)
         else:
             return fom
                                                 
@@ -558,9 +558,9 @@ class Analyzer:
 
         assert n < 10, 'must pass less than 10 parameter sets'
 
-        rows = int((n-1)/3) + 1
+        rows = int((n-1)/2) + 1
 
-        plot_num = rows*100 + 30 + 1
+        plot_num = rows*100 + 20 + 1
 
         for data in self.dataSets:
             if (data.st_th, data.wdt_th) in param_sets:

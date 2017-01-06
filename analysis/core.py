@@ -212,7 +212,7 @@ class ParamData:
             plt.xlabel('Group')
         return fom
     
-    def mat_stat(self, label, mean=True):
+    def mat_stat(self, label, mean=True, plot = False):
         """For the specified matrix parameter (such as scattering matrices),
         this returns a numpy array of the same shape of the parameter
         matrix. Each entry in this matrix is the mean (or standard deviation)
@@ -229,6 +229,8 @@ class ParamData:
                      the standard deviation of the FOM.
         :type mean: bool
 
+        :param plot: if True, plots the FOM matrix using :any:`matplotlib.pyplot.matshow`
+        :type plot: bool
         """
         fom = np.zeros([self.n,self.n])
 
@@ -241,7 +243,14 @@ class ParamData:
                     fom[i,j] = self.__nz_mean__(np.array([d[i,j] for d in all_data]))
                 else:
                     fom[i,j] = np.std(np.array([d[i,j] for d in all_data]))
-        return fom
+        if plot:
+            logdata = np.where(fom > 0, np.log(fom), np.zeros(np.shape(fom)))
+            plt.imshow(logdata, interpolation='none')
+            plt.title(label + " for ST: " + str(self.st_th) + " WDT: "
+                      + str(self.wdt_th), size=10)
+            plt.colorbar()
+        else:
+            return fom
                                                 
     def __nz_mean__(self, a):
         """ Returns the mean of the non-zero elements """
@@ -524,6 +533,42 @@ class Analyzer:
         #  fancybox=True, shadow=True, ncol=5)
         plt.legend(loc='best', fontsize=14,numpoints=1)
         return plt
+
+    def plot_mat(self, label, param_sets=[(0.1,0.1)], mean = True):
+        """ Plot the FOM means or standard deviations for a matrix
+        quantity (such as scattering matrices). A single figure with
+        subplots for each param_set will be created.
+
+        :param label: the desired Serpent output matrix parameter
+        :type label: string
+
+        :param param_sets: the desired st/wdt combinations that should \
+                           be plotted. Each set should be in a tuple,
+                           a maximum of 30 can be plotted.
+        :type param_sets: list(tuple(float, float))
+
+        :param mean: if True (default), will display the mean FOM, \
+                     otherwise will display the standard deviation of \
+                     the FOM.
+        :type mean: bool
+
+        """
+
+        n = len(param_sets)
+
+        assert n < 10, 'must pass less than 10 parameter sets'
+
+        rows = int((n-1)/3) + 1
+
+        plot_num = rows*100 + 30 + 1
+
+        for data in self.dataSets:
+            if (data.st_th, data.wdt_th) in param_sets:
+                plt.subplot(plot_num)
+                data.mat_stat(label, plot = True)
+                plot_num = plot_num + 1
+        plt.tight_layout()
+        
     
     def __get_mean__(self,label, grp):
         return [data.fom_stat(label)[0][grp] for data in self.dataSets]

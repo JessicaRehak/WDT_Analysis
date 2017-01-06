@@ -80,3 +80,8 @@ class TestClass:
     def test_Analysis_histogram_stdev(self):
         histogram = np.array([[3],[3]])
         assert_true(np.all(histogram == self.test_analyzer.histogram(['INF_FLX','INF_TOT','INF_ABS'],mean=False).as_matrix()))
+
+    @raises(AssertionError)
+    def test_Analysis_plot_mat(self):
+        param_sets = range(11)
+        self.test_analyzer.plot_mat('INF_SP0', param_sets)

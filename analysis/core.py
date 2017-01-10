@@ -103,7 +103,7 @@ class DataSet():
             errors = self.__get_val__(label,err = True)
             for error in errors[0]:
                 if error != 0:
-                    data.append(1.0/(self.cpu*pow(error,2)))
+                    data.append(np.power(self.cpu*np.power(error,2), -1))
                 else:
                     data.append(0)
             data = np.array(data, ndmin=2)
@@ -186,7 +186,36 @@ class ParamData:
         cpu[0,0] = np.mean([data.get_cpu() for data in self.dataSets])
         cpu[1,0] = np.std([data.get_cpu() for data in self.dataSets])
         return cpu
+
+    def value_stat(self, label, err = False, plot = False):
+        """For the specified parameter, this returns numpy array in which the
+        first row contains the mean value (or mean error) from the ten
+        simulations for each energy group. The second row contains the
+        standard deviation for the values (or errors).
+
+        :param label: specifies the Serpent 2 output parameter.
+        :type label: string
+
+        :param err: if False (default), returns the mean values, otherwise \
+                    returns the mean error.
+        :type err: bool
         
+        :param plot: If True, will plot the FOM by energy group.
+        :type plot: bool
+
+        """
+        value = np.zeros([2,self.n])
+
+        for i in range(self.n):
+            group_values = self.__group_vals__(label,i, err = err)
+            value[0,i] = np.mean(group_values)
+            value[1,i] = np.std(group_values)
+        if plot:
+            plt.errorbar(range(1,self.n+1),value[0,:],fmt='.b',yerr=value[1,:])
+            plt.ylabel(label)
+            plt.xlabel('Group')
+        return value
+    
     def fom_stat(self, label, plot=False):
         """ For the specified parameter, this returns numpy array in which
         the first row contains the mean FOM from the ten simulations for
@@ -261,9 +290,9 @@ class ParamData:
             return np.sum(a)/nz
         
         
-    #def __group_vals__(self, label, grp, err = False, isMatrix = False):
-        # Returns the values of label for each run for that group
-    #    return np.array([data.get_data(label, reshape = isMatrix, err = err)[:,grp] for data in self.dataSets])
+    def __group_vals__(self, label, grp, err = False, isMatrix = False):
+         """ Returns the values of label for each run for that group """
+         return np.array([data.get_data(label, reshape = isMatrix, err = err)[:,grp] for data in self.dataSets])
     
     def __group_fom__(self, label, grp):
         return np.array([data.get_fom(label)[:,grp] for data in self.dataSets])

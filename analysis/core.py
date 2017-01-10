@@ -2,7 +2,7 @@
 .. module:: core
     :synopsis: The core analysis tools
 
-.. moduleauthor:: Joshua Rehak <jsrehak@gmail.com>
+.. moduleauthor:: Joshua Rehak <jsrehak@berkeley.edu>
 
 """
 

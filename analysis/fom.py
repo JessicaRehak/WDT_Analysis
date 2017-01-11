@@ -24,9 +24,12 @@ class Analyzer():
     :param location: folder where the Serpent output files are located
     :type location: string
 
+    :param verb: if True, prints the name of the files uploaded
+    :type verb: bool
+
     """
 
-    def __init__(self, location):
+    def __init__(self, location, verb = False):
         # Verify file location exists
         abs_location = os.path.abspath(location)
         assert os.path.exists(abs_location), "Folder does not exist"
@@ -37,8 +40,11 @@ class Analyzer():
         # Get all .m files
         for file_name in os.listdir(abs_location):
             if file_name[-2:] == '.m':
+                if verb: print "Uploading: " + file_name
                 file_loc = abs_location + '/' + file_name
                 self.data.append(core.DataSet(file_loc))
+
+        print "Uploaded " + str(len(self.data)) + " files."
                 
     def err(self, label, grp = 1, plot = False, cycle = True):
         """ Returns the an array with the error and cycle number for

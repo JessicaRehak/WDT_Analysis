@@ -16,7 +16,7 @@ import math as math
 import pandas as pd
 from IPython.display import display, HTML
 
-class DataSet():
+class DataFile():
     """An object containing the data from a Serpent 2 output file
     (`_res.m`). When created, it will seek the provided filename and
     ingest all the data, stored in dictionary format.
@@ -140,7 +140,7 @@ class DataSet():
                 return array
 
 class ParamData:
-    """ An object containing all the :class:`analysis.core.DataSet` objects for a particular
+    """ An object containing all the :class:`analysis.core.DataFile` objects for a particular
     set of surface tracking and weighted-delta tracking threshold values.
     When created, it will find all the `_res.m` files in the appropriate
     directory.
@@ -165,7 +165,7 @@ class ParamData:
         for i in range(1,11):
             file_name = dir_name + 'run' + str(i) + '_res.m'
             if os.path.exists(file_name):
-                self.dataSets.append(DataSet(file_name))
+                self.dataSets.append(DataFile(file_name))
             else:
                 warnings.warn(file_name + ' does not exist, skipping')
                 

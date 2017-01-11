@@ -15,7 +15,7 @@ import pandas as pd
 import core
 
 class Analyzer():
-    """ An object containing multiple :class:`analysis.core.DataSet`
+    """ An object containing multiple :class:`analysis.core.DataFile`
     objects with methods to analyze FOM convergence properties. All
     `res.m` files in a directory will be ingested when initialized,
     the intention is that each of these represents the same simulation
@@ -42,7 +42,7 @@ class Analyzer():
             if file_name[-2:] == '.m':
                 if verb: print "Uploading: " + file_name
                 file_loc = abs_location + '/' + file_name
-                self.data.append(core.DataSet(file_loc))
+                self.data.append(core.DataFile(file_loc))
 
         print "Uploaded " + str(len(self.data)) + " files."
                 

@@ -24,12 +24,17 @@ class Analyzer():
     :param location: folder where the Serpent output files are located
     :type location: string
 
+    :param name: desired name for this data set
+    :type name: string, optional
+    
     :param verb: if True, prints the name of the files uploaded
     :type verb: bool
 
+
     """
 
-    def __init__(self, location, verb = False):
+    def __init__(self, location, name = "", verb = False):
+        self.name = name
         # Verify file location exists
         abs_location = os.path.abspath(location)
         assert os.path.exists(abs_location), "Folder does not exist"
@@ -68,8 +73,7 @@ class Analyzer():
                   and error in the second column. If multiple groups are passed \
                   They will be horizontally concatenated in this manner (ex: second \
                   group specified will have data in the third column)
-        """
-
+        """        
         err = self.__val_vs__(label, grp, cycle, fom = False)
 
         if plot:
@@ -79,10 +83,88 @@ class Analyzer():
                 xlabel = 'CPU Time'
                 
             ax = self.__plot_me__(err, xlabel, 'ERR', 'ERR for ' +
-                                  label + ' vs. ' + xlabel)
+                                  label + ' vs. ' + xlabel,
+                                  labels = self.__grp_label__(grp))
             ax.set_xscale('log')
             ax.set_yscale('log')
         return err
+
+    def err_mat(self, label, entry, plot = False, cycle = True):
+        """ Returns the an array with the error and cycle number for
+        analysis of error for a given Serpent 2 matrix output parameter for
+        a given location (or locations) in the matrix.
+
+        :param label: Serpent 2 output parameter
+        :type label: string
+
+        :param entry: The matrix entry of interest.
+        :type entry: tuple(int, int) or list(tuple(int, int)))
+
+        :param plot: If True, plots the error.
+        :type plot: bool
+
+        :param mode: If True (default), returns the cycle number in \
+                     the first column. Otherwise, returns the cpu time.
+        :type mode: bool
+
+        :returns: :class:`numpy.array` with the cycles/cpu in the first column \
+                  and error in the second column. If multiple matrix entries are passed \
+                  They will be horizontally concatenated in this manner (ex: second \
+                  matrix entry specified will have data in the third column)
+        """        
+        err_mat = self.__mat_vs__(label, entry, cycle, fom = False)
+
+        if plot:
+            if cycle:
+                xlabel = 'Cycles'
+            else:
+                xlabel = 'CPU Time'
+                
+            ax = self.__plot_me__(err_mat, xlabel, 'ERR', 'ERR for ' +
+                                  label + ' vs. ' + xlabel,
+                                  labels = self.__entry_label__(entry))
+            ax.set_xscale('log')
+            ax.set_yscale('log')
+        
+        return err_mat
+
+    def fom_mat(self, label, entry, plot = False, cycle = True):
+        """ Returns the an array with the FOM and cycle number for
+        analysis of error for a given Serpent 2 matrix output parameter for
+        a given location (or locations) in the matrix.
+
+        :param label: Serpent 2 output parameter
+        :type label: string
+
+        :param entry: The matrix entry of interest.
+        :type entry: tuple(int, int) or list(tuple(int, int)))
+
+        :param plot: If True, plots the error.
+        :type plot: bool
+
+        :param mode: If True (default), returns the cycle number in \
+                     the first column. Otherwise, returns the cpu time.
+        :type mode: bool
+
+        :returns: :class:`numpy.array` with the cycles/cpu in the first column \
+                  and error in the second column. If multiple matrix entries are passed \
+                  They will be horizontally concatenated in this manner (ex: second \
+                  matrix entry specified will have data in the third column)
+        """        
+        fom_mat = self.__mat_vs__(label, entry, cycle, fom = True)
+        
+        if plot:
+            if cycle:
+                xlabel = 'Cycles'
+            else:
+                xlabel = 'CPU Time'
+                
+            ax = self.__plot_me__(fom_mat, xlabel, 'FOM', 'FOM for ' +
+                                  label + ' vs. ' + xlabel, labels =
+                                  self.__entry_label__(entry))
+            ax.set_xscale('log')
+
+        return fom_mat
     
     def fom(self, label, grp = 1, plot = False, cycle = True):
         """ Returns the an array with the FOM and cycle number for
@@ -108,6 +190,7 @@ class Analyzer():
                   group specified will have data in the third column)
 
         """
+            
         fom = self.__val_vs__(label, grp, cycle, fom = True)
 
         if plot:
@@ -117,15 +200,16 @@ class Analyzer():
                 xlabel = 'CPU Time'
                 
             ax = self.__plot_me__(fom, xlabel, 'FOM', 'FOM for ' +
-                                  label + ' vs. ' + xlabel)
+                                  label + ' vs. ' + xlabel, labels =
+                                  self.__grp_label__(grp))
             ax.set_xscale('log')
         return fom
 
-    def __plot_me__(self, data, xlabel, ylabel, title):
+    def __plot_me__(self, data, xlabel, ylabel, title, labels):
         colors = self.__plot_setup__(xlabel, ylabel, title)
         
         for i in range(1,np.shape(data)[1]):
-            plt.plot(data[:,0], data[:,i], '.', color = colors[i-1], label="Group " + str(i))
+            plt.plot(data[:,0], data[:,i], '.', color = colors[i-1], label=labels[i-1])
         plt.legend(loc = 'best')
         return plt.gca()
         
@@ -151,7 +235,41 @@ class Analyzer():
 
         return ans
 
-                
+    def __mat_vs__(self, label, entry, cycle = True, fom = True):
+
+        if type(entry) is not list:
+            entry = [entry]
+        
+        # Get size of the matrix from the first entry
+        n = np.shape(self.data[0].get_data(label, err = True,
+                                               reshape = True))[0]
+        
+        assert n != 1, "Reshape failed, invalid Serpent matrix parameter"
+
+        loc = []
+        for e in entry:
+            assert e[0] <= n and e[1] <= n, "Invalid matrix location " + str(e)
+            loc.append((e[0] - 1)*n + e[1])
+
+        return self.__val_vs__(label, loc, cycle, fom)
+        
+        
+
+    def __grp_label__(self, grp):
+        
+        if type(grp) is not list:
+            return ["Group " + str(grp)]
+        else:
+            return ["Group " + str(g) for g in grp]
+
+    def __entry_label__(self, entry):
+        
+        if type(entry) is not list:
+            return ["Entry " + str(entry)]
+        else:
+            return ["Entry " + str(e) for e in entry]
+
+                     
     def get_filenames(self):
         return [d.get_filename() for d in self.data]
 
@@ -179,3 +297,56 @@ class Analyzer():
             r, g, b = tableau[i]  
             tableau[i] = (r / 255., g / 255., b / 255.)  
         return tableau
+
+class Comparator:
+    """An object that contains two :class:`analysis.fom.Analyzer` objects
+    and generates plots comparing the results from each.
+
+    :param dir: list of strings with the location of the data sets.
+    :type dir: list(string)
+
+    :param names: list of strings that are the chosen names for the data sets
+    :type names: list(string)
+
+    :param verb: When True, shows all filenames as they are uploaded, \
+                 useful to ensure initialization doesn't hang.
+
+    """
+    def __init__(self, dirs, names, verb = False):
+        assert len(dirs) == len(names), "Number of directories and names must match"
+        self.data = [Analyzer(dir, names[i], verb) for i, dir in enumerate(dirs)]
+
+    def plot_err(self, label, grp, cycle = True):
+        """ Plots the given Serpent 2 output parameter for the specified groups
+        for both sets of data
+
+        :param label: Serpent 2 output parameter
+        :type label: string
+
+        :param grp: The energy group(s) of interest
+        :type grp: int or list(int)
+
+        :param cycle: If True (default) plots against cycle number, otherwise CPU time.
+        :type cycle: bool
+        
+        """
+        data_sets = [d.err(label, grp, False, cycle) for d in self.data]
+
+        if cycle:
+            xlabel = 'Cycles'
+        else:
+            xlabel = 'CPU time'
+        
+        self.__multi_plot__(data_sets, xlabel, 'Error in ' + label,
+                            'Error in ' + label, self.__grp_label__(grp))
+
+    def __muti_plot__(self, data_sets, xlabel, ylabel, title, labels):
+        
+        
+        
+    def __grp_label__(self, grp):
+        
+        if type(grp) is not list:
+            return ["Group " + str(grp)]
+        else:
+            return ["Group " + str(g) for g in grp]

@@ -14,6 +14,10 @@ class TestClass:
         cls.cpu    = np.array([10.5, 20.5, 30.5])
         cls.error1  = np.array([0.00030, 0.00020, 0.00010])
         cls.error2  = np.array([0.00032, 0.00022, 0.00012])
+        cls.materror11 = np.array([ 0.00030, 0.00020, 0.00010])
+        cls.materror12 = np.array([ 0.00032, 0.00022, 0.00012])
+        cls.materror21 = np.array([ 0.00034, 0.00024, 0.00014])
+        cls.materror22 = np.array([ 0.00036, 0.00026, 0.00016])
 
     
     def test_fom_file_upload(self):
@@ -73,3 +77,51 @@ class TestClass:
         ok_(all([c in func[:,0] for c in self.cycles]))
         ok_(all([e in func[:,1] for e in ans1]))
         ok_(all([e in func[:,2] for e in ans2]))
+
+    def test_fom_err_mat(self):
+        """ FOM err_mat should return the correct error values"""
+        func = self.test_analyzer.err_mat('TEST_MAT', [(1,1),(1,2),(2,1),(2,2)])
+        eq_(np.shape(func), (3,5))
+        ok_(all([c in func[:,0] for c in self.cycles]))
+        ok_(all([e in func[:,1] for e in self.materror11]))
+        ok_(all([e in func[:,2] for e in self.materror12]))
+        ok_(all([e in func[:,3] for e in self.materror21]))
+        ok_(all([e in func[:,4] for e in self.materror22]))
+
+    def test_fom_err_mat_entry(self):
+        """ FOM err_mat should work for single entries """
+        func = self.test_analyzer.err_mat('TEST_MAT', (1,1))
+        eq_(np.shape(func), (3,2))
+        ok_(all([c in func[:,0] for c in self.cycles]))
+        ok_(all([e in func[:,1] for e in self.materror11]))
+
+    def test_fom_err_mat_shape(self):
+        """ FOM err_mat should return the correct shape"""
+        func = self.test_analyzer.err_mat('TEST_MAT', [(1,1),(1,2),(2,1),(2,2)])
+        eq_(np.shape(func), (3,5))
+
+    @raises(AssertionError)
+    def test_fom_err_mat_nonmatrix(self):
+        """ FOM err_mat should throw an assertion error if a non-matrix
+        quantity is requested """
+        func = self.test_analyzer.err_mat('TEST_VAL',  [(1,1),(1,2),(2,1),(2,2)])
+
+    @raises(AssertionError)
+    def test_fom_err_mat_invalid_entries(self):
+        """ FOM err_mat should throw an assertion error if invalid entries
+        are passed """
+        func = self.test_analyzer.err_mat('TEST_MAT', [(3,1), (1,1), (5,2)])
+
+    def test_fom_fom_mat(self):
+        """ FOM fom_mat should return the correct FOM values"""
+        func = self.test_analyzer.fom_mat('TEST_MAT', [(1,1),(1,2),(2,1),(2,2)])
+        ans11 = np.power(self.cpu * np.power(self.materror11, 2), -1)
+        ans21 = np.power(self.cpu * np.power(self.materror21, 2), -1)
+        ans12 = np.power(self.cpu * np.power(self.materror12, 2), -1)
+        ans22 = np.power(self.cpu * np.power(self.materror22, 2), -1)
+        eq_(np.shape(func), (3,5))
+        ok_(all([c in func[:,0] for c in self.cycles]))
+        ok_(all([e in func[:,1] for e in ans11]))
+        ok_(all([e in func[:,2] for e in ans12]))
+        ok_(all([e in func[:,3] for e in ans21]))
+        ok_(all([e in func[:,4] for e in ans22]))

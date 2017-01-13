@@ -50,8 +50,8 @@ class Analyzer():
                 self.data.append(core.DataFile(file_loc))
 
         print "Uploaded " + str(len(self.data)) + " files."
-                
-    def err(self, label, grp = 1, plot = False, cycle = True):
+
+    def get_data(self, label, grp_entry, fom = True, plot = False, cycle = True):
         """ Returns the an array with the error and cycle number for
         analysis of error for a given Serpent 2 output parameter
         and group number (if the parameter has multiple groups).
@@ -59,151 +59,64 @@ class Analyzer():
         :param label: Serpent 2 output parameter
         :type label: string
 
-        :param grp: The energy group of interest (default 1)
-        :type grp: int or list(int)
+        :param grp_entry: The energy group(s) of interest or the matrix \
+                          entries of interest.
+        :type grp: int or list(int) if group, tuple(int, int) or list(tuple(int,int)) if entries
 
-        :param plot: If True, plots the error.
+        :param fom: If True, returns Figure of merit, otherwise returns error.
+        
+        :param plot: If True, plots.
         :type plot: bool
 
-        :param mode: If True (default), returns the cycle number in \
+        :param cycle: If True (default), returns the cycle number in \
                      the first column. Otherwise, returns the cpu time.
-        :type mode: bool
+        :type cycle: bool
 
         :returns: :class:`numpy.array` with the cycles/cpu in the first column \
                   and error in the second column. If multiple groups are passed \
                   They will be horizontally concatenated in this manner (ex: second \
-                  group specified will have data in the third column)
-        """        
-        err = self.__val_vs__(label, grp, cycle, fom = False)
-
-        if plot:
-            if cycle:
-                xlabel = 'Cycles'
-            else:
-                xlabel = 'CPU Time'
-                
-            ax = self.__plot_me__(err, xlabel, 'ERR', 'ERR for ' +
-                                  label + ' vs. ' + xlabel,
-                                  labels = self.__grp_label__(grp))
-            ax.set_xscale('log')
-            ax.set_yscale('log')
-        return err
-
-    def err_mat(self, label, entry, plot = False, cycle = True):
-        """ Returns the an array with the error and cycle number for
-        analysis of error for a given Serpent 2 matrix output parameter for
-        a given location (or locations) in the matrix.
-
-        :param label: Serpent 2 output parameter
-        :type label: string
-
-        :param entry: The matrix entry of interest.
-        :type entry: tuple(int, int) or list(tuple(int, int)))
-
-        :param plot: If True, plots the error.
-        :type plot: bool
-
-        :param mode: If True (default), returns the cycle number in \
-                     the first column. Otherwise, returns the cpu time.
-        :type mode: bool
-
-        :returns: :class:`numpy.array` with the cycles/cpu in the first column \
-                  and error in the second column. If multiple matrix entries are passed \
-                  They will be horizontally concatenated in this manner (ex: second \
-                  matrix entry specified will have data in the third column)
-        """        
-        err_mat = self.__mat_vs__(label, entry, cycle, fom = False)
-
-        if plot:
-            if cycle:
-                xlabel = 'Cycles'
-            else:
-                xlabel = 'CPU Time'
-                
-            ax = self.__plot_me__(err_mat, xlabel, 'ERR', 'ERR for ' +
-                                  label + ' vs. ' + xlabel,
-                                  labels = self.__entry_label__(entry))
-            ax.set_xscale('log')
-            ax.set_yscale('log')
+                  group specified will have data in the third column) """
         
-        return err_mat
+        if (type(grp_entry) is list and type(grp_entry[0]) is int) or type(grp_entry) is int:
+            if fom:
+                data = self.__val_vs__(label, grp_entry, cycle, fom = True)
+            else:
+                data = self.__val_vs__(label, grp_entry, cycle, fom = False)
+            group = True
+        else:
+            if fom:
+                data = self.__mat_vs__(label, grp_entry, cycle, fom = True)
+            else:
+                data = self.__mat_vs__(label, grp_entry, cycle, fom = False)
+            group = False
 
-    def fom_mat(self, label, entry, plot = False, cycle = True):
-        """ Returns the an array with the FOM and cycle number for
-        analysis of error for a given Serpent 2 matrix output parameter for
-        a given location (or locations) in the matrix.
-
-        :param label: Serpent 2 output parameter
-        :type label: string
-
-        :param entry: The matrix entry of interest.
-        :type entry: tuple(int, int) or list(tuple(int, int)))
-
-        :param plot: If True, plots the error.
-        :type plot: bool
-
-        :param mode: If True (default), returns the cycle number in \
-                     the first column. Otherwise, returns the cpu time.
-        :type mode: bool
-
-        :returns: :class:`numpy.array` with the cycles/cpu in the first column \
-                  and error in the second column. If multiple matrix entries are passed \
-                  They will be horizontally concatenated in this manner (ex: second \
-                  matrix entry specified will have data in the third column)
-        """        
-        fom_mat = self.__mat_vs__(label, entry, cycle, fom = True)
-        
         if plot:
             if cycle:
                 xlabel = 'Cycles'
             else:
-                xlabel = 'CPU Time'
-                
-            ax = self.__plot_me__(fom_mat, xlabel, 'FOM', 'FOM for ' +
-                                  label + ' vs. ' + xlabel, labels =
-                                  self.__entry_label__(entry))
-            ax.set_xscale('log')
+                xlabel = 'CPU time'
 
-        return fom_mat
-    
-    def fom(self, label, grp = 1, plot = False, cycle = True):
-        """ Returns the an array with the FOM and cycle number for
-        analysis of convergence for a given Serpent 2 output parameter
-        and group number (if the parameter has multiple groups).
+                if fom:
+                    ylabel = 'FOM for ' + label
+                    title = ylabel + ' vs. ' + xlabel
+                else:
+                    ylabel = 'Error in ' + label
+                    title = ylabel + ' vs. ' + xlabel
 
-        :param label: Serpent 2 output parameter
-        :type label: string
-
-        :param grp: The energy group of interest (default 1)
-        :type grp: int or list(int)
-
-        :param plot: If True, plots the FOM convergence.
-        :type plot: bool
-
-        :param mode: If True (default), returns the cycle number in \
-                     the first column. Otherwise, returns the cpu time.
-        :type mode: bool
-
-        :returns: :class:`numpy.array` with the cycles/cpu in the first column \
-                  and error in the second column. If multiple groups are passed \
-                  They will be horizontally concatenated in this manner (ex: second \
-                  group specified will have data in the third column)
-
-        """
+                if self.name != "":
+                    title = title + " (" + self.name + ")"
             
-        fom = self.__val_vs__(label, grp, cycle, fom = True)
+                if group:
+                    labels = self.__grp_label__(grp_entry)
+                else:
+                    labels = self.__entry_label__(grp_entry)
+            
+                ax = self.__plot_me__(data, xlabel, ylabel, title, labels)
+                ax.set_xscale('log')                            
 
-        if plot:
-            if cycle:
-                xlabel = 'Cycles'
-            else:
-                xlabel = 'CPU Time'
-                
-            ax = self.__plot_me__(fom, xlabel, 'FOM', 'FOM for ' +
-                                  label + ' vs. ' + xlabel, labels =
-                                  self.__grp_label__(grp))
-            ax.set_xscale('log')
-        return fom
+                if not fom:
+                    ax.set_yscale('log')
+        return data                
 
     def __plot_me__(self, data, xlabel, ylabel, title, labels):
         colors = self.__plot_setup__(xlabel, ylabel, title)
@@ -341,18 +254,12 @@ class Comparator:
         """
 
         if (type(grp_entry) is list and type(grp_entry[0]) is int) or type(grp_entry) is int:
-            if fom:
-                data_sets = [d.fom(label, grp_entry, False, cycle) for d in self.data]
-            else:
-                data_sets = [d.err(label, grp_entry, False, cycle) for d in self.data]
             group = True
         else:
-            if fom:
-                data_sets = [d.fom_mat(label, grp_entry, False, cycle) for d in self.data]
-            else:
-                data_sets = [d.err_mat(label, grp_entry, False, cycle) for d in self.data]
             group = False
-
+            
+        data_sets = [d.get_data(label, grp_entry, fom=fom, plot=False,
+                                cycle=cycle) for d in self.data]
         if cycle:
             xlabel = 'Cycles'
         else:
@@ -371,10 +278,11 @@ class Comparator:
             labels = self.__entry_label__(grp_entry)
             
         ax = self.__multi_plot__(data_sets, xlabel, ylabel, title, labels)
-                            
-        ax.set_yscale('log')
+
+        ax.set_xscale('log')
+
         if not fom:
-            ax.set_xscale('log')
+            ax.set_yscale('log')
             
 
     def __multi_plot__(self, data_sets, xlabel, ylabel, title, labels):

@@ -96,26 +96,26 @@ class Analyzer():
             else:
                 xlabel = 'CPU time'
 
-                if fom:
-                    ylabel = 'FOM for ' + label
-                    title = ylabel + ' vs. ' + xlabel
-                else:
-                    ylabel = 'Error in ' + label
-                    title = ylabel + ' vs. ' + xlabel
+            if fom:
+                ylabel = 'FOM for ' + label
+                title = ylabel + ' vs. ' + xlabel
+            else:
+                ylabel = 'Error in ' + label
+                title = ylabel + ' vs. ' + xlabel
 
-                if self.name != "":
-                    title = title + " (" + self.name + ")"
+            if self.name != "":
+                title = title + " (" + self.name + ")"
             
-                if group:
-                    labels = self.__grp_label__(grp_entry)
-                else:
-                    labels = self.__entry_label__(grp_entry)
+            if group:
+                labels = self.__grp_label__(grp_entry)
+            else:
+                labels = self.__entry_label__(grp_entry)
             
-                ax = self.__plot_me__(data, xlabel, ylabel, title, labels)
-                ax.set_xscale('log')                            
+            ax = self.__plot_me__(data, xlabel, ylabel, title, labels)
+            ax.set_xscale('log')                            
 
-                if not fom:
-                    ax.set_yscale('log')
+            if not fom:
+                ax.set_yscale('log')
         return data                
 
     def __plot_me__(self, data, xlabel, ylabel, title, labels):
@@ -299,7 +299,7 @@ class Comparator:
                          " (" + self.data[i].name + ")")
 
             plot_color = colors[0]
-        plt.legend(loc = 'best')
+        plt.legend(loc = 'best', markerscale = 2.0)
         
         return plt.gca()
 

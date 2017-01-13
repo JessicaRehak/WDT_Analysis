@@ -311,38 +311,118 @@ class Comparator:
     :param verb: When True, shows all filenames as they are uploaded, \
                  useful to ensure initialization doesn't hang.
 
+.. note: Note that this is best for plotting exactly two sets of data. \
+         The first data set will render gray in plots, with the others \
+         rendering in color.
+    
     """
     def __init__(self, dirs, names, verb = False):
         assert len(dirs) == len(names), "Number of directories and names must match"
         self.data = [Analyzer(dir, names[i], verb) for i, dir in enumerate(dirs)]
 
-    def plot_err(self, label, grp, cycle = True):
+    def plot(self, label, grp_entry, cycle = True, fom = True):
         """ Plots the given Serpent 2 output parameter for the specified groups
-        for both sets of data
+        for both sets of data.
 
         :param label: Serpent 2 output parameter
         :type label: string
 
-        :param grp: The energy group(s) of interest
-        :type grp: int or list(int)
+        :param grp_entry: The energy group(s) of interest or the entries \
+                          in the matrix of interest.
+        :type grp_entry: groups: int or list(int), entries: tuple(int, int) or list(tuple(int,int))
 
         :param cycle: If True (default) plots against cycle number, otherwise CPU time.
         :type cycle: bool
+
+        :param fom: If True (default) plots log-log plot of FOM, otherwise \
+                    lin-log plot of error.
+        :type fom: bool
         
         """
-        data_sets = [d.err(label, grp, False, cycle) for d in self.data]
+
+        if (type(grp_entry) is list and type(grp_entry[0]) is int) or type(grp_entry) is int:
+            if fom:
+                data_sets = [d.fom(label, grp_entry, False, cycle) for d in self.data]
+            else:
+                data_sets = [d.err(label, grp_entry, False, cycle) for d in self.data]
+            group = True
+        else:
+            if fom:
+                data_sets = [d.fom_mat(label, grp_entry, False, cycle) for d in self.data]
+            else:
+                data_sets = [d.err_mat(label, grp_entry, False, cycle) for d in self.data]
+            group = False
 
         if cycle:
             xlabel = 'Cycles'
         else:
             xlabel = 'CPU time'
-        
-        self.__multi_plot__(data_sets, xlabel, 'Error in ' + label,
-                            'Error in ' + label, self.__grp_label__(grp))
 
-    def __muti_plot__(self, data_sets, xlabel, ylabel, title, labels):
+        if fom:
+            ylabel = 'FOM for ' + label
+            title = ylabel + ' vs. ' + xlabel
+        else:
+            ylabel = 'Error in ' + label
+            title = ylabel + ' vs. ' + xlabel
+
+        if group:
+            labels = self.__grp_label__(grp_entry)
+        else:
+            labels = self.__entry_label__(grp_entry)
+            
+        ax = self.__multi_plot__(data_sets, xlabel, ylabel, title, labels)
+                            
+        ax.set_yscale('log')
+        if not fom:
+            ax.set_xscale('log')
+            
+
+    def __multi_plot__(self, data_sets, xlabel, ylabel, title, labels):
+        colors = self.__plot_setup__(xlabel, ylabel, title)
         
+        for i in range(0,len(data_sets)):
+            to_plot = data_sets[i]
+            if i == 0:
+                plot_color = colors[1]
+                
+            for j in range(1,np.shape(to_plot)[1]):
+                plt.plot(to_plot[:,0], to_plot[:,j], '.', color =
+                         plot_color[i*j + j - 1], label=labels[j-1] +
+                         " (" + self.data[i].name + ")")
+
+            plot_color = colors[0]
+        plt.legend(loc = 'best')
         
+        return plt.gca()
+
+    def __plot_setup__(self,xlabel,ylabel, title):
+        self.base_color = ([0.0,107.0/255,164.0/255])
+        self.other_color = ([1.0,128.0/255,14.0/255])
+        plt.figure(figsize=(12, 9))
+        ax = plt.subplot(111)  
+        ax.spines["top"].set_visible(False)  
+        ax.spines["right"].set_visible(False)
+        ax.get_xaxis().tick_bottom()  
+        ax.get_yaxis().tick_left()
+        plt.xticks(fontsize=12)
+        plt.yticks(fontsize=12)
+        plt.ylabel(ylabel,fontsize=12)
+        plt.xlabel(xlabel,fontsize=12)
+        plt.title(title, y=1.08)
+        tableau = [(31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),  
+             (44, 160, 44), (152, 223, 138), (214, 39, 40), (255, 152, 150),  
+             (148, 103, 189), (197, 176, 213), (140, 86, 75), (196, 156, 148),  
+             (227, 119, 194), (247, 182, 210), (127, 127, 127), (199, 199, 199),  
+             (188, 189, 34), (219, 219, 141), (23, 190, 207), (158, 218, 229)]
+        gray = [(96, 99, 106), (165, 172, 175), (65, 68, 81), (143, 135, 130),
+                (207, 207, 207)]
+        for i in range(len(tableau)):  
+            r, g, b = tableau[i]  
+            tableau[i] = (r / 255., g / 255., b / 255.)
+        for i in range(len(gray)):  
+            r, g, b = gray[i]  
+            gray[i] = (r / 255., g / 255., b / 255.)  
+        return [tableau, gray]
         
     def __grp_label__(self, grp):
         
@@ -350,3 +430,10 @@ class Comparator:
             return ["Group " + str(grp)]
         else:
             return ["Group " + str(g) for g in grp]
+        
+    def __entry_label__(self, entry):
+        
+        if type(entry) is not list:
+            return ["Entry " + str(entry)]
+        else:
+            return ["Entry " + str(e) for e in entry]

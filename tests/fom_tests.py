@@ -127,3 +127,13 @@ class TestClass:
         ok_(all([e in func[:,2] for e in ans12]))
         ok_(all([e in func[:,3] for e in ans21]))
         ok_(all([e in func[:,4] for e in ans22]))
+
+    def test_fom_average_fom(self):
+        """ Average FOM should return the correct value on non-matrix """
+        avg = self.test_analyzer.get_avg('TEST_VAL', 1)
+        ok_(np.isclose(avg,1852133.92597))
+
+    def test_fom_average_with_n(self):
+        """ Average FOM should return correct value for the last n-entries """
+        avg = self.test_analyzer.get_avg('TEST_VAL',1,2)
+        ok_(np.isclose(avg, 2249100.3598560574))

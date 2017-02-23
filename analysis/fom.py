@@ -51,6 +51,14 @@ class Analyzer():
 
         print "Uploaded " + str(len(self.data)) + " files."
 
+    def get_avg(self, label, grp_entry, n=0):
+        data = self.__val_vs__(label, grp_entry, True, True)
+        
+        # Sort by cycle number
+        data = data[data[:,0].argsort()]
+        
+        return np.mean(data[-n:,1])
+
     def get_data(self, label, grp_entry, fom = True, plot = False, cycle = True):
         """ Returns the an array with the error and cycle number for
         analysis of error for a given Serpent 2 output parameter
@@ -213,7 +221,7 @@ class Analyzer():
 
 class Comparator:
     """An object that contains two :class:`analysis.fom.Analyzer` objects
-    and generates plots comparing the results from each.
+    and generates plots and comparisons for the results from each.
 
     :param dir: list of strings with the location of the data sets.
     :type dir: list(string)
@@ -232,6 +240,39 @@ class Comparator:
     def __init__(self, dirs, names, verb = False):
         assert len(dirs) == len(names), "Number of directories and names must match"
         self.data = [Analyzer(dir, names[i], verb) for i, dir in enumerate(dirs)]
+
+    def compare(self, labels, n_pts):
+        """ For each Serpent 2 output parameter specified, this will
+        average the FOM using the last n_pts for both data sets to get
+        an average FOM, and return a report indicating which data set
+        had the higher FOM for each parameter.
+
+        :param label: Serpent 2 output parameter
+        :type label: list(string) or string
+
+        :param mat_labels: Serpent 2 output parameters that are matrices
+        :type label: list(string) or string
+
+        :param n_pts: The number of points that should be used when comparing
+        the data sets.
+        :type n_pts: int
+
+        """
+
+        if type(labels) is not list:
+            labels = [labels]
+
+        # Get the number of groups from 'INF_FLX'
+        n = np.shape(self.data[0].data[0].get_data('INF_FLX'))[1]
+            
+        for label in labels:
+            for i in range(1,n+1):
+                # Get data
+                data = [d.get_data(label, i, fom=True, plot=False,cycle=True)
+                        for d in self.data]
+                avg = [np.average(d[1]) for d in data]
+
+        
 
     def plot(self, label, grp_entry, cycle = True, fom = True):
         """ Plots the given Serpent 2 output parameter for the specified groups

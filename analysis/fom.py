@@ -241,7 +241,7 @@ class Comparator:
         assert len(dirs) == len(names), "Number of directories and names must match"
         self.data = [Analyzer(dir, names[i], verb) for i, dir in enumerate(dirs)]
 
-    def compare(self, labels, n_pts):
+    def compare(self, labels=[], mat_labels=[], n_pts=100):
         """ For each Serpent 2 output parameter specified, this will
         average the FOM using the last n_pts for both data sets to get
         an average FOM, and return a report indicating which data set
@@ -262,19 +262,39 @@ class Comparator:
         if type(labels) is not list:
             labels = [labels]
 
+        if type(mat_labels) is not list:
+            mat_labels =[mat_labels]
+
         # Get the number of groups from 'INF_FLX'
         n = np.shape(self.data[0].data[0].get_data('INF_FLX'))[1]
+        names = [d.name for d in self.data]
             
         for label in labels:
             for i in range(1,n+1):
                 # Get data
-                data = [d.get_data(label, i, fom=True, plot=False,cycle=True)
-                        for d in self.data]
-                avg = [np.average(d[1]) for d in data]
+                data = [d.get_avg(label,i,n_pts) for d in self.data]
+                sort = np.sort(np.array(data))[::-1]
+                if sort[1] > 1e-16:
+                    ratio = str(sort[0]/sort[1])
+                else:
+                    ratio = str(sort[0]) + " (Divide by zero)"
+                    
+                print label + " Group: " + str(i) + ": " + names[np.argmax(data)] + " Ratio: " + ratio
 
+        for label in mat_labels:
+            for i in range(1,n+1):
+                for j in range(1,n+1):
+                    data = [d.get_avg(label,i+j-1,n_pts) for d in self.data]
+                    sort = np.sort(np.array(data))[::-1]
+                    if sort[1] > 1e-16:
+                        ratio = str(sort[0]/sort[1])
+                    else:
+                        ratio = str(sort[0]) + " (Divide by zero)"
+
+                    print label + " Entry: (" + str(i) + "," + str(j) + "): " + names[np.argmax(data)] + " Ratio: " + ratio
         
 
-    def plot(self, label, grp_entry, cycle = True, fom = True):
+    def plot(self, label, grp_entry, cycle = True, fom = True, show_avg=False, avg_n=100):
         """ Plots the given Serpent 2 output parameter for the specified groups
         for both sets of data.
 
@@ -291,6 +311,13 @@ class Comparator:
         :param fom: If True (default) plots log-log plot of FOM, otherwise \
                     lin-log plot of error.
         :type fom: bool
+
+        :param show_avg: If True, plot the average, as calculated using the final \
+                         avg_n points of the dataset.
+        :type show_avg: bool
+
+        param avg_n: The number of points used to calculate the average
+        :type avg_n: int
         
         """
 
@@ -338,7 +365,7 @@ class Comparator:
                 plt.plot(to_plot[:,0], to_plot[:,j], '.', color =
                          plot_color[i*j + j - 1], label=labels[j-1] +
                          " (" + self.data[i].name + ")")
-
+                
             plot_color = colors[0]
         plt.legend(loc = 'best', markerscale = 2.0)
         

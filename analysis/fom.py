@@ -241,6 +241,24 @@ class Comparator:
         assert len(dirs) == len(names), "Number of directories and names must match"
         self.data = [Analyzer(dir, names[i], verb) for i, dir in enumerate(dirs)]
 
+    def add(self,dir,name, verb = False):
+        self.data.append(Analyzer(dir,name,verb))
+        
+    def ratio(self, label, grp, n_pts):
+        """ Returns an array with the ratio of the average FOM for the
+        parameter in label compared to the first analyzer in the data
+        object.
+        """
+
+        names = [d.name for d in self.data]
+        data = [d.get_avg(label,grp,n_pts) for d in self.data]
+        
+        if data[0] != 0:
+            data /= data[0]
+
+        return names,data
+        
+
     def compare(self, labels=[], mat_labels=[], n_pts=100):
         """ For each Serpent 2 output parameter specified, this will
         average the FOM using the last n_pts for both data sets to get
@@ -275,11 +293,16 @@ class Comparator:
                 data = [d.get_avg(label,i,n_pts) for d in self.data]
                 sort = np.sort(np.array(data))[::-1]
                 if sort[1] > 1e-16:
-                    ratio = str(sort[0]/sort[1])
+                    r = sort[0]/sort[1]
+                    zero = 0
+                    ratio = str(r)
                 else:
-                    ratio = str(sort[0]) + " (Divide by zero)"
-                    
-                print label + " Group: " + str(i) + ": " + names[np.argmax(data)] + " Ratio: " + ratio
+                    r = sort[0]
+                    zero = 1
+                    ratio = str(r) + " (Divide by zero)"
+
+                if r > 1.1 or zero == 1:
+                    print label + " Group: " + str(i) + ": " + names[np.argmax(data)] + " Ratio: " + ratio
 
         for label in mat_labels:
             for i in range(1,n+1):
@@ -287,11 +310,15 @@ class Comparator:
                     data = [d.get_avg(label,i+j-1,n_pts) for d in self.data]
                     sort = np.sort(np.array(data))[::-1]
                     if sort[1] > 1e-16:
-                        ratio = str(sort[0]/sort[1])
+                        r = sort[0]/sort[1]
+                        zero = 0
+                        ratio = str(r)
                     else:
-                        ratio = str(sort[0]) + " (Divide by zero)"
-
-                    print label + " Entry: (" + str(i) + "," + str(j) + "): " + names[np.argmax(data)] + " Ratio: " + ratio
+                        r = sort[0]
+                        zero = 1
+                        ratio = str(r) + " (Divide by zero)"
+                    if r > 1.1 or zero == 1:
+                        print label + " Entry: (" + str(i) + "," + str(j) + "): " + names[np.argmax(data)] + " Ratio: " + ratio
         
 
     def plot(self, label, grp_entry, cycle = True, fom = True, show_avg=False, avg_n=100):

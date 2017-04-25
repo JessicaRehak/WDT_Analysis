@@ -60,7 +60,7 @@ class Analyzer():
         return np.mean(data[-n:,1])
 
     def get_collapse_avg(self, label, grps, n = 0):
-        data = self.get_collapse( label, grps, True, True)
+        data = self.get_collapse(label, grps, True, True)
 
         data = data[data[:,0].argsort()]
         
@@ -274,6 +274,20 @@ class Comparator:
 
         names = [d.name for d in self.data]
         data = [d.get_avg(label,grp,n_pts) for d in self.data]
+        
+        if data[0] != 0:
+            data /= data[0]
+
+        return names,data
+
+    def collapse_ratio(self, label, grps, n_pts):
+        """ Returns an array with the ratio of the average FOM for the
+        parameter in label compared to the first analyzer in the data
+        object. Collapses groups grps.
+        """
+
+        names = [d.name for d in self.data]
+        data = [d.get_collapse_avg(label,grp,n_pts) for d in self.data]
         
         if data[0] != 0:
             data /= data[0]

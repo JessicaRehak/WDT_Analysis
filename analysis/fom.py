@@ -65,6 +65,12 @@ class Analyzer():
             val = self.__val_vs__(label, grp, cycle, fom = False)
             sum += val[:,1:2]
         sum = np.hstack((val[:,0:1], sum))
+
+        if fom:
+            # Get CPU
+            cpu = self.__val_vs__(label, grp, cycle = False, fom = False)[:,0:1]
+            sum[:,1:2] = np.power(np.multiply(np.power(sum[:,1:2],2), cpu),-1)
+        
         return sum
 
     def get_data(self, label, grp_entry, fom = True, plot = False, cycle = True):

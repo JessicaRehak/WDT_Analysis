@@ -59,6 +59,14 @@ class Analyzer():
         
         return np.mean(data[-n:,1])
 
+    def get_collapse(self, label, grps, fom = True, cycle = True):
+        sum = 0
+        for grp in grps:
+            val = self.__val_vs__(label, grp, cycle, fom = False)
+            sum += val[:,1:2]
+        sum = np.hstack((val[:,0:1], sum))
+        return sum
+
     def get_data(self, label, grp_entry, fom = True, plot = False, cycle = True):
         """ Returns the an array with the error and cycle number for
         analysis of error for a given Serpent 2 output parameter

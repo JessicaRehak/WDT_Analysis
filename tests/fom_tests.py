@@ -137,3 +137,28 @@ class TestClass:
         """ Average FOM should return correct value for the last n-entries """
         avg = self.test_analyzer.get_avg('TEST_VAL',1,2)
         ok_(np.isclose(avg, 2249100.3598560574))
+
+    def test_collapse_type(self):
+        """ Collapsed group errors should return a numpy array """
+        data = self.test_analyzer.get_collapse('TEST_VAL', [1,2])
+        ok_(isinstance(data, np.ndarray))
+
+    def test_collapse_shapes(self):
+        """ Collapsed group errors should return the correct shape """
+        data = self.test_analyzer.get_collapse('TEST_MAT', [1,3,2])
+        eq_(np.shape(data), (3,2))
+
+    def test_collapse_values(self):
+        """ Collapsed group errors should return the correct values """
+        data = self.test_analyzer.get_collapse('TEST_MAT', [1,3,2], fom = False)
+        ans = self.materror11 + self.materror12 + self.materror21
+        ok_(all([c in data[:,0] for c in self.cycles]))
+        ok_(np.allclose(np.sort(data[:,1]), np.sort(ans)))
+
+    def test_collapse_fom(self):
+        """ Collapsed group fom should return the correct values """
+        data = self.test_analyzer.get_collapse('TEST_MAT', [1,3,2], fom = True)
+        sum = self.materror11 + self.materror12 + self.materror21
+        ans = np.power(np.multiply(np.power(sum,2), self.cpu), -1)
+        ok_(all([c in data[:,0] for c in self.cycles]))
+        ok_(np.allclose(np.sort(data[:,1]), np.sort(ans)))

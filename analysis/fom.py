@@ -59,6 +59,14 @@ class Analyzer():
         
         return np.mean(data[-n:,1])
 
+    def get_collapse_avg(self, label, grps, n = 0):
+        data = self.get_collapse( label, grps, True, True)
+
+        data = data[data[:,0].argsort()]
+        
+        return np.mean(data[-n:,1])
+
+
     def get_collapse(self, label, grps, fom = True, cycle = True):
         sum = 0
         for grp in grps:

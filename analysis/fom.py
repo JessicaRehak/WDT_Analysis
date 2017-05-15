@@ -71,14 +71,20 @@ class Analyzer():
         sum = 0
         for grp in grps:
             val = self.__val_vs__(label, grp, cycle, fom = False)
-            sum += val[:,1:2]
+            if fom:
+                sum += np.power(val[:,1:2],2)
+            else:
+                sum += val[:,1:2]
+
         sum = np.hstack((val[:,0:1], sum))
 
         if fom:
             # Get CPU
             cpu = self.__val_vs__(label, grp, cycle = False, fom = False)[:,0:1]
-            sum[:,1:2] = np.power(np.multiply(np.power(sum[:,1:2],2), cpu),-1)
-        
+            zeros = (sum[:,1:2] == 0)
+            sum[:,1:2] = np.power(np.multiply(sum[:,1:2], cpu),-1)
+            sum[:,1:2][zeros] = 0
+            
         return sum
 
     def get_data(self, label, grp_entry, fom = True, plot = False, cycle = True):
@@ -287,7 +293,7 @@ class Comparator:
         """
 
         names = [d.name for d in self.data]
-        data = [d.get_collapse_avg(label,grp,n_pts) for d in self.data]
+        data = [d.get_collapse_avg(label,grps,n_pts) for d in self.data]
         
         if data[0] != 0:
             data /= data[0]

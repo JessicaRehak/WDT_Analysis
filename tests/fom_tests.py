@@ -158,17 +158,21 @@ class TestClass:
     def test_collapse_fom(self):
         """ Collapsed group fom should return the correct values """
         data = self.test_analyzer.get_collapse('TEST_MAT', [1,3,2], fom = True)
-        sum = self.materror11 + self.materror12 + self.materror21
-        ans = np.power(np.multiply(np.power(sum,2), self.cpu), -1)
+        sum = np.power(self.materror11,2) + np.power(self.materror12,2) + np.power(self.materror21,2)
+        ans = np.power(np.multiply(sum, self.cpu), -1)
         ok_(all([c in data[:,0] for c in self.cycles]))
         ok_(np.allclose(np.sort(data[:,1]), np.sort(ans)))
 
     def test_collapse_avg(self):
         """ Collapsed average should return the correct fom value """
         avg = self.test_analyzer.get_collapse_avg('TEST_MAT', [1,3,2])
-        ok_(np.isclose(156103.25455768596, avg))
+        sum = np.power(self.materror11,2) + np.power(self.materror12,2) + np.power(self.materror21,2)
+        ans = np.power(np.multiply(sum, self.cpu), -1)
+        ok_(np.isclose(np.mean(ans), avg))
 
     def test_collapse_avg_n(self):
         """ Collapsed average should return the correct fom value with n """
         avg = self.test_analyzer.get_collapse_avg('TEST_MAT', [1,3,2], 1)
-        ok_(np.isclose(252985.22566282138, avg))
+        sum = np.power(self.materror11,2) + np.power(self.materror12,2) + np.power(self.materror21,2)
+        ans = np.power(np.multiply(sum, self.cpu), -1)        
+        ok_(np.isclose(np.mean(ans[-1:]), avg))

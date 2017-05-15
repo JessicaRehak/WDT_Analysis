@@ -36,7 +36,7 @@ class Analyzer():
     def __init__(self, location, name = "", verb = False):
         self.name = name
         # Verify file location exists
-        abs_location = os.path.abspath(location)
+        abs_location = os.path.abspath(os.path.expanduser(location))
         assert os.path.exists(abs_location), "Folder does not exist"
 
         # Initialize data array

@@ -52,6 +52,20 @@ class Analyzer():
         print "Uploaded " + str(len(self.data)) + " files."
 
     def get_avg(self, label, grp_entry, n=0):
+        """ Returns the average FOM from the last `n` values of the
+        Serpent parameter provided.
+        
+        :param label: Serpent 2 output parameter
+        :type label: string
+
+        :param grp_entry: the energy group of interest for the average. \
+        Does not support multiple groups or matrix entry format, i.e. (1,1).        
+        :type grp_entry: int
+
+        :param n: the number of data points to be used to calculate the average
+        :type n: int
+
+        """
         data = self.__val_vs__(label, grp_entry, True, True)
         
         # Sort by cycle number
@@ -249,23 +263,20 @@ class Analyzer():
         return tableau
 
 class Comparator:
-    """An object that contains two :class:`analysis.fom.Analyzer` objects
-    and generates plots and comparisons for the results from each.
+    """ An object that contains two :class:`analysis.fom.Analyzer` objects
+    and generates plots and comparisons for the results from each. 
 
-    :param dir: list of strings with the location of the data sets.
-    :type dir: list(string)
+    :param dirs: list of strings with the location of the data sets.
+    :type dirs: list(string)
 
     :param names: list of strings that are the chosen names for the data sets
     :type names: list(string)
 
     :param verb: When True, shows all filenames as they are uploaded, \
                  useful to ensure initialization doesn't hang.
-
-.. note: Note that this is best for plotting exactly two sets of data. \
-         The first data set will render gray in plots, with the others \
-         rendering in color.
-    
+    :type verb: bool
     """
+    
     def __init__(self, dirs, names, verb = False):
         assert len(dirs) == len(names), "Number of directories and names must match"
         self.data = [Analyzer(dir, names[i], verb) for i, dir in enumerate(dirs)]
@@ -314,7 +325,7 @@ class Comparator:
         :param mat_labels: Serpent 2 output parameters that are matrices
         :type label: list(string) or string
 
-        :param n_pts: The number of points that should be used when comparing
+        :param n_pts: The number of points that should be used when comparing \
         the data sets.
         :type n_pts: int
 

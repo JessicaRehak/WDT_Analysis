@@ -18,6 +18,8 @@ Full documentation can be built in the `docs` folder using:
 make html
 ```
 
+Tests can be run using `nosetests` in the main directory.
+
 ## Dependencies:
 
 - [PyNE](https://github.com/pyne/pyne)

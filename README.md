@@ -12,7 +12,11 @@ The `Analysis` package contains two modules:
 
 An iPython notebook outlining its use is included [here](WDT_analysis.ipynb).
 
-[Full Documentation](docs/_build/html/index.html)
+Full documentation can be built in the `docs` folder using:
+
+```
+make html
+```
 
 ## Dependencies:
 

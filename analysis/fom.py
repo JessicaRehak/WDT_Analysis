@@ -73,15 +73,30 @@ class Analyzer():
         
         return np.mean(data[-n:,1])
 
-    def get_collapse_avg(self, label, grps, n = 0):
-        data = self.get_collapse(label, grps, True, True)
-
-        data = data[data[:,0].argsort()]
-        
-        return np.mean(data[-n:,1])
 
 
     def get_collapse(self, label, grps, fom = True, cycle = True):
+        """ Returns a combined FOM or error value for all the groups requested.
+
+        :param label: Serpent 2 output parameter
+        :type label: string
+
+        :param grps: The groups to be combined.
+        :type grps: list(int)
+
+        :param fom: if True (default) returns the FOM, otherwise returns \
+        error.
+        :type fom: bool
+
+        :param cycle: if True (default) returns cycle number in the first column, \
+        otherwise returns cpu time.
+        :type cycle: bool
+
+        :returns: an array with cycles/cpu in the first column, and error \
+        or FOM for the combined groups in the second column.
+        :rtype: :class:`numpy.ndarray`
+
+        """
         sum = 0
         for grp in grps:
             val = self.__val_vs__(label, grp, cycle, fom = False)
@@ -100,6 +115,28 @@ class Analyzer():
             sum[:,1:2][zeros] = 0
             
         return sum
+
+    def get_collapse_avg(self, label, grps, n = 0):
+        """ Returns the average FOM from the last _n_ values of the Serpent \
+        parameter provided for multiple groups. This operates like :meth:`analysis.fom.Analyzer.get_avg` \
+        but first combines the FOM for the groups and then calculates the average.
+
+        :param label: Serpent 2 output parameter
+        :type label: string
+
+        :param grp: the energy groups of interest for the combined average
+        :type grp_entry: int
+
+        :param n: the number of data points to be used to calculate the average
+        :type n: int
+        
+        """
+        data = self.get_collapse(label, grps, True, True)
+
+        data = data[data[:,0].argsort()]
+        
+        return np.mean(data[-n:,1])
+
 
     def get_data(self, label, grp_entry, fom = True, plot = False, cycle = True):
         """ Returns the an array with the error and cycle number for
@@ -234,6 +271,10 @@ class Analyzer():
 
                      
     def get_filenames(self):
+        """ Returns a list of the filenames for all files uploaded by the analyzer
+
+        :rtype: list(string)
+        """
         return [d.get_filename() for d in self.data]
 
 

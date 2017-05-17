@@ -133,10 +133,10 @@ class Analyzer():
                 xlabel = 'CPU time'
 
             if fom:
-                ylabel = 'FOM for ' + label
+                ylabel = 'FOM for ' + label.replace('_',' ')
                 title = ylabel + ' vs. ' + xlabel
             else:
-                ylabel = 'Error in ' + label
+                ylabel = 'Error in ' + label.replace('_',' ')
                 title = ylabel + ' vs. ' + xlabel
 
             if self.name != "":
@@ -237,6 +237,7 @@ class Analyzer():
         plt.ylabel(ylabel,fontsize=12)
         plt.xlabel(xlabel,fontsize=12)
         plt.title(title, y=1.08)
+        plt.grid(True,which='both',color='0.5')
         tableau = [(31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),  
              (44, 160, 44), (152, 223, 138), (214, 39, 40), (255, 152, 150),  
              (148, 103, 189), (197, 176, 213), (140, 86, 75), (196, 156, 148),  

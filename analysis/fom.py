@@ -374,69 +374,7 @@ class Comparator:
             data /= data[0]
 
         return names,data
-        
-
-    def compare(self, labels=[], mat_labels=[], n_pts=100):
-        """ For each Serpent 2 output parameter specified, this will
-        average the FOM using the last n_pts for both data sets to get
-        an average FOM, and return a report indicating which data set
-        had the higher FOM for each parameter.
-
-        :param label: Serpent 2 output parameter
-        :type label: list(string) or string
-
-        :param mat_labels: Serpent 2 output parameters that are matrices
-        :type label: list(string) or string
-
-        :param n_pts: The number of points that should be used when comparing \
-        the data sets.
-        :type n_pts: int
-
-        """
-
-        if type(labels) is not list:
-            labels = [labels]
-
-        if type(mat_labels) is not list:
-            mat_labels =[mat_labels]
-
-        # Get the number of groups from 'INF_FLX'
-        n = np.shape(self.data[0].data[0].get_data('INF_FLX'))[1]
-        names = [d.name for d in self.data]
             
-        for label in labels:
-            for i in range(1,n+1):
-                # Get data
-                data = [d.get_avg(label,i,n_pts) for d in self.data]
-                sort = np.sort(np.array(data))[::-1]
-                if sort[1] > 1e-16:
-                    r = sort[0]/sort[1]
-                    zero = 0
-                    ratio = str(r)
-                else:
-                    r = sort[0]
-                    zero = 1
-                    ratio = str(r) + " (Divide by zero)"
-
-                if r > 1.1 or zero == 1:
-                    print label + " Group: " + str(i) + ": " + names[np.argmax(data)] + " Ratio: " + ratio
-
-        for label in mat_labels:
-            for i in range(1,n+1):
-                for j in range(1,n+1):
-                    data = [d.get_avg(label,i+j-1,n_pts) for d in self.data]
-                    sort = np.sort(np.array(data))[::-1]
-                    if sort[1] > 1e-16:
-                        r = sort[0]/sort[1]
-                        zero = 0
-                        ratio = str(r)
-                    else:
-                        r = sort[0]
-                        zero = 1
-                        ratio = str(r) + " (Divide by zero)"
-                    if r > 1.1 or zero == 1:
-                        print label + " Entry: (" + str(i) + "," + str(j) + "): " + names[np.argmax(data)] + " Ratio: " + ratio
-        
 
     def plot(self, label, grp_entry, cycle = True, fom = True, show_avg=False, avg_n=100):
         """ Plots the given Serpent 2 output parameter for the specified groups

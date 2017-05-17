@@ -323,6 +323,18 @@ class Comparator:
         self.data = [Analyzer(dir, names[i], verb) for i, dir in enumerate(dirs)]
 
     def add(self,dir,name, verb = False):
+        """ Add a new data set to the comparator
+
+        :param dir: location of the new data set.
+        :type dir: string
+
+        :param name: name for the new data set.
+        :type name: string
+
+        :param verb: When True, shows all filenames as they are uploaded, \
+                 useful to ensure initialization doesn't hang.
+        :type verb: bool        
+        """
         self.data.append(Analyzer(dir,name,verb))
         
     def ratio(self, label, grp, n_pts):
@@ -342,9 +354,19 @@ class Comparator:
     def collapse_ratio(self, label, grps, n_pts):
         """ Returns an array with the ratio of the average FOM for the
         parameter in label compared to the first analyzer in the data
-        object. Collapses groups grps.
-        """
+        object. Calculates the ratio based on the combined groups provided.
+        
+        :param label: Serpent 2 output parameter
+        :type label: string
 
+        :param grps: Energy groups to be combined.
+        :type grps: list(int)
+
+        :param n_pts: The number of points that should be used when comparing \
+        the data sets.
+        :type n_pts: int
+
+        """
         names = [d.name for d in self.data]
         data = [d.get_collapse_avg(label,grps,n_pts) for d in self.data]
         

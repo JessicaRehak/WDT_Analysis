@@ -176,3 +176,16 @@ class TestClass:
         sum = np.power(self.materror11,2) + np.power(self.materror12,2) + np.power(self.materror21,2)
         ans = np.power(np.multiply(sum, self.cpu), -1)        
         ok_(np.isclose(np.mean(ans[-1:]), avg))
+
+    def test_fom_var(self):
+        """ Figure of merit variance should return the correct value """
+        ans = np.var(np.power(self.cpu * np.power(self.error1, 2), -1))
+        var = self.test_analyzer.get_var('TEST_VAL', 1, start=-1, end=0)
+        ok_(np.isclose(ans, var))
+
+    def test_fom_var_no_range(self):
+        """ Figure of merit variance should return the correct value """
+        fom = np.power(self.cpu * np.power(self.error1, 2), -1)
+        ans = np.var(fom[1:3])
+        var = self.test_analyzer.get_var('TEST_VAL', 1)
+        ok_(np.isclose(ans, var))

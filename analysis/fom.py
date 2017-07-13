@@ -49,6 +49,7 @@ class Analyzer():
                 file_loc = abs_location + '/' + file_name
                 self.data.append(core.DataFile(file_loc))
 
+        self.n = len(self.data)
         print "Uploaded " + str(len(self.data)) + " files."
 
     def get_avg(self, label, grp_entry, n=0):
@@ -76,7 +77,12 @@ class Analyzer():
         
         return np.mean(data[-n:,1])
 
-
+    def get_var(self, label, grp_entry, start=0, end=0):
+        s = self.n/2 + start
+        e = self.n + 1
+        data = self.__val_vs__(label, grp_entry, True, True)
+        data = data[data[:,0].argsort()]
+        return np.var(data[s:e,1])
 
     def get_collapse(self, label, grps, fom = True, cycle = True):
         """ Returns a combined FOM or error value for all the groups requested.
@@ -348,11 +354,14 @@ class Comparator:
 
         names = [d.name for d in self.data]
         data = [d.get_avg(label,grp,n_pts) for d in self.data]
+        error = [d.get_var(label,grp) for d in self.data]
+
+        error = np.divide(error,data)
         
         if data[0] != 0:
             data /= data[0]
 
-        return names,data
+        return names, data, error
 
     def collapse_ratio(self, label, grps, n_pts):
         """ Returns an array with the ratio of the average FOM for the

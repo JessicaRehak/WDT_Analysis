@@ -54,10 +54,10 @@ def get_fom(comparator, label, grp, cycle_caps=[], corr=False):
     x = []
     y = []
     yerr = []
-    
+
     for data_set in comparator.data:
         # Get FOM data and sort by cycle
-        data = data_set.get_data(label,grp)
+        data = data_set.get_data(label,grp,cycle=(not corr))
 
         #Check if there is a cycle cap
         if cycle_caps:
@@ -68,22 +68,19 @@ def get_fom(comparator, label, grp, cycle_caps=[], corr=False):
         data = data[data[:,0].argsort()]
 
         x.append(float(data_set.name))
+
         if not corr:
-            y.append(data[-1,1])
             yerr.append(np.sqrt(data_set.get_var(label,grp)))
         else:
-            dcyc = cyc_cpu_plot(comparator, x[-1], plot=False)
-            cpu = 0
+            cycl = data_set.get_data(label, grp, cycle=True)[:,0]
+            cycl = cycl[cycl[:].argsort()]
+            dcyc = np.average(cyc_cpu_plot(comparator, x[-1], plot=False))
+            data[:,1] = np.multiply(data[:,0], data[:,1])
+            data[:,1] = np.divide(data[:,1], cycl)
+            data[:,1] = data[:,1] * dcyc
+            yerr.append(np.sqrt(np.var(data[int(np.ceil(np.shape(data)[0]/2.0)):,1])))
             
-            for datafile in data_set.data:
-                if datafile.get_cpu() > cpu:
-                    cpu = datafile.get_cpu()
-                    
-            y.append(data[-1,1]*cpu*dcyc[-1])
-            yerr.append(0)
-        # Get STD from last half of dataset, square root is required to
-        # make it the standard deviation
-
+        y.append(data[-1,1])
         
     return x, y, yerr
 
@@ -118,11 +115,11 @@ def plot_title(label, grp, casename):
     title = casename + param + 'for the ' + group + " group"
     return title
 
-def plot_fom(comparator, casename, label, grp, save=False, fontsize=20):
+def plot_fom(comparator, casename, label, grp, save=False, fontsize=20, cycle_caps=[], corr=False):
    
     title = plot_title(label, grp, casename)
     
-    x, y, yerr = get_fom(comparator, label, grp)
+    x, y, yerr = get_fom(comparator, label, grp, cycle_caps = cycle_caps, corr = corr)
     
     plt.figure(figsize=(12,9))
     plt.errorbar(x,y,yerr=yerr, fmt='k.',ms=12)

@@ -30,6 +30,7 @@ class DataFile():
         self.data = serpent.parse_res(file_name)
         self.filename = file_name
         self.cpu = self.data['TOT_CPU_TIME'][0]
+        self.cycles = self.data['CYCLE_IDX'][0]
         
     def get_cpu(self):
         """Returns a float with the total CPU time"""
@@ -74,7 +75,7 @@ class DataFile():
         except KeyError:
             raise KeyError('Invalid serpent2 res_m label')
             
-    def get_fom(self, label, reshape=False):
+    def get_fom(self, label, reshape=False, cpu=True):
         """Returns an array with the FOM for the the specified output
         parameter. Total CPU time :math:`T` in minutes, and the error
         :math:`\sigma` is read directly from the file. The FOM is
@@ -94,6 +95,10 @@ class DataFile():
         :param reshape: if False (default), returns an array, otherwise \
                         attempts to reshape into a square matrix.
         :type reshape: bool
+
+        :param cpu: if True (default), calculates FOM using the CPU time, \
+                    otherwise uses cycle number.
+        :type cpu: bool
         
         """
         
@@ -101,9 +106,15 @@ class DataFile():
             data = []
             #errors = self.__get_val__(self.data[label],err = True)
             errors = self.__get_val__(label,err = True)
+            
+            if cpu:
+                time = self.cpu
+            else:
+                time = self.cycles
+                
             for error in errors[0]:
                 if error != 0:
-                    data.append(np.power(self.cpu*np.power(error,2), -1))
+                    data.append(np.power(time*np.power(error,2), -1))
                 else:
                     data.append(0)
             data = np.array(data, ndmin=2)

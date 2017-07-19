@@ -62,6 +62,14 @@ class TestClass:
                           1198014.18127723, 277728.93914383, 56240.11017663]])
         ok_(np.allclose(fom, self.data.get_fom('INF_FLX')))
 
+    def test_DataFile_FOM_values_cycles(self):
+        """ DataFile should return correct value when calculating FOM using cycles """
+        fom = np.array([[ 7694.6752847 , 65746.21959237,
+                          69252.07756233, 65746.21959237, 73046.01899196,
+                          56689.34240363, 69252.07756233, 127551.02040816,
+                          591715.97633136, 137174.21124829, 27777.77777778]])
+        ok_(np.allclose(fom, self.data.get_fom('INF_FLX', cpu=False)))
+
     def test_DataFile_FOM_reshape_shape(self):
         """ DataFile should return the correct shape when calculating
         FOM using reshape """

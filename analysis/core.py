@@ -31,6 +31,10 @@ class DataFile():
         self.filename = file_name
         self.cpu = self.data['TOT_CPU_TIME'][0]
         self.cycles = self.data['CYCLE_IDX'][0]
+
+    def __lt__(self,other):
+        """Sort based on cycle number"""
+        return self.cycles < other.cycles
         
     def get_cpu(self):
         """Returns a float with the total CPU time"""

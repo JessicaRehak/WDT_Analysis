@@ -51,7 +51,10 @@ class SerpentRun():
         assert self.n > 0, "No .m files in that location"
 
         ## Cycles
-        self.cycles = []
+        self.cycles = np.array([file.cycles for file in self.files])
+
+        ## CPU time
+        self.cpus = np.array([file.cpu for file in self.files])
         
         ## Parameter list
         if type(params) is not list: params = [ params ]

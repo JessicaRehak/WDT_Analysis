@@ -13,7 +13,7 @@ class TestClass:
         cls.test_run = wdt.SerpentRun(cls.base_dir)
         # This is the actual data contained in the fom_data directory,
         # already sorted by cycles
-        cls.cycles = [10, 20, 30]
+        cls.cycles = np.array([10, 20, 30])
         cls.cpu    = np.array([10.5, 20.5, 30.5])
         #  TEST_VAL
         ## Group 1
@@ -26,6 +26,8 @@ class TestClass:
         cls.materror21 = np.array([ 0.00034, 0.00024, 0.00014])
         cls.materror22 = np.array([ 0.00036, 0.00026, 0.00016])
 
+    ## ==================== INIT =====================================
+        
     @raises(AssertionError)
     def test_init_filename(self):
         """ SerpentRun init should throw AssertionError if non-existent folder is given """
@@ -51,8 +53,8 @@ class TestClass:
     def test_init_sorting(self):
         """ SerpentRun init should sort all files based on cycle number """
 
-        cycles = [file.cycles for file in self.test_run.files]
-        eq_(cycles, self.cycles)
+        cycles = np.array([file.cycles for file in self.test_run.files])
+        ok_(np.all(cycles == self.cycles))
 
     @raises(AssertionError)
     def test_init_params(self):
@@ -65,6 +67,17 @@ class TestClass:
         good_run = wdt.SerpentRun(self.base_dir, params=('test',0.1))
         ok_(isinstance(good_run.params, list))
 
+    def test_init_cycles(self):
+        """ SerpentRun init should create cycles list with proper values """
+        ok_(np.all(self.test_run.cycles == self.cycles))
+
+    def test_init_cpus(self):
+        """ SerpentRun init should create cycles list with proper values """
+        ok_(np.all(self.test_run.cpus == self.cpu))
+
+
+    ## ==================== GET_DATA =================================
+    
     def test_get_data(self):
         """ SerpentRun get_data should return the correct error and
         values """

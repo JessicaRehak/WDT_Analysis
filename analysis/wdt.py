@@ -25,10 +25,15 @@ class SerpentRun():
                    is optional and is best used in a parametric study.
     :type params: list(tuple)
 
+    :param cyc_cpu: Cycles/CPU for this parameter set
+    :type cyc_cpu: float
+
     :param verb: if True, prints the name of each file uploaded
     :type verb: bool
+
+
     """
-    def __init__(self, directory, params = [], verb=False):
+    def __init__(self, directory, params = [], cyc_cpu=1.0, verb=False):
         # Verify location exists
         abs_location = os.path.abspath(os.path.expanduser(directory))
         assert os.path.exists(abs_location), "Folder does not exist"
@@ -65,6 +70,9 @@ class SerpentRun():
 
         ## Original location
         self.loc = abs_location
+
+        ## Cycles/CPU
+        self.cyc_cpu = cyc_cpu
         
         print("Uploaded " + str(self.n) + " files.")
 
@@ -116,6 +124,14 @@ class SerpentRun():
         
         return self.__fom__(self.get_error(label, grp),
                             (self.cpus if cpu else self.cycles))[:end]
+
+    def fom_corr(self, label, grp, cap=np.inf):
+        """ Returns an array with the calculated FOM for a given Serpent 2
+        output parameter and group number. Calculated using the cycle number
+        and then corrected using this SerpentRun's value for cyc_cpu
+
+        """
+        return self.cyc_cpu * self.fom(label, grp, cpu=False, cap=cap)
 
     def __fom__(self, error, time):
         """ Calc cpu given error and time """

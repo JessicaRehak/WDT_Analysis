@@ -101,3 +101,10 @@ class TestClass:
         """ SerpentRun calc_fom should return correct fom when capped """
         fom = np.power(np.multiply(np.power(self.error1,2), self.cpu),-1)[:2]
         ok_(np.all(fom == self.test_run.fom('TEST_VAL',1, cap=25)))
+
+    ## ==================== FOM_CORR =================================
+
+    def test_fom_corr(self):
+        self.test_run.cyc_cpu = 2.0
+        fom = np.power(np.multiply(np.power(self.error1,2), self.cycles),-1) * 2.0
+        ok_(np.all(fom == self.test_run.fom_corr('TEST_VAL',1)))

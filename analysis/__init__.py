@@ -4,4 +4,4 @@
 
 """
 
-__all__ = ["core", "fom", "plot_tools"]
+__all__ = ["core", "fom", "plot_tools", "wdt"]

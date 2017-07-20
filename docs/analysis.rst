@@ -15,3 +15,11 @@ These are tools for the analysis of FOM convergence.
    
 .. automodule:: analysis.fom
    :members:
+
+wdt
+====================
+
+Tools to conduct a parametric study of WDT values.
+
+.. automodule:: analysis.wdt
+   :members:

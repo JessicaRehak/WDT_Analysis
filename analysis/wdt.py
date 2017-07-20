@@ -50,6 +50,9 @@ class SerpentRun():
         self.n = len(self.files)
         assert self.n > 0, "No .m files in that location"
 
+        ## Cycles
+        self.cycles = []
+        
         ## Parameter list
         if type(params) is not list: params = [ params ]
         if len(params):
@@ -69,3 +72,20 @@ class SerpentRun():
         for tup in self.params:
             ret_str += '\t' + str(tup[0]) + ':\t' + str(tup[1]) + '\n'
         return ret_str[:-1]
+
+    def get_error(self, label, grp):
+        """ Returns an array with the value or error for a given
+        Serpent 2 output parameter and group number
+
+        :param label: Serpent 2 output parameter
+        :type label: string
+
+        :param grp: The energy group of interest or the location in the
+                    flattened matrix. This is ENERGY GROUP not the entry
+                    in the vector.
+        :type grp: int
+
+        """
+        return np.array([file.get_data(label, err=True)[0][grp - 1]
+                         for file in self.files])
+        

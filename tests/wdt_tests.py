@@ -15,7 +15,11 @@ class TestClass:
         # already sorted by cycles
         cls.cycles = [10, 20, 30]
         cls.cpu    = np.array([10.5, 20.5, 30.5])
+        #  TEST_VAL
+        ## Group 1
+        cls.val1    = np.array([1.23456e02]*3, ) 
         cls.error1  = np.array([0.00030, 0.00020, 0.00010])
+        cls.val2    = np.array([2.23456e02]*3) 
         cls.error2  = np.array([0.00032, 0.00022, 0.00012])
         cls.materror11 = np.array([ 0.00030, 0.00020, 0.00010])
         cls.materror12 = np.array([ 0.00032, 0.00022, 0.00012])
@@ -60,3 +64,10 @@ class TestClass:
         """ SerpentRun init should cast params into a list """
         good_run = wdt.SerpentRun(self.base_dir, params=('test',0.1))
         ok_(isinstance(good_run.params, list))
+
+    def test_get_data(self):
+        """ SerpentRun get_data should return the correct error and
+        values """
+
+        ok_(np.all(self.error1 == self.test_run.get_error('TEST_VAL',1))) # Err grp 1
+        ok_(np.all(self.error2 == self.test_run.get_error('TEST_VAL',2))) # Err grp 2

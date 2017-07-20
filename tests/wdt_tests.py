@@ -49,3 +49,14 @@ class TestClass:
 
         cycles = [file.cycles for file in self.test_run.files]
         eq_(cycles, self.cycles)
+
+    @raises(AssertionError)
+    def test_init_params(self):
+        """ SerpentRun init should throw assertion error if params
+        are not a tuple or list of tuples """
+        bad_run = wdt.SerpentRun(self.base_dir, params=[1,("str",1)])
+
+    def test_init_param_list(self):
+        """ SerpentRun init should cast params into a list """
+        good_run = wdt.SerpentRun(self.base_dir, params=('test',0.1))
+        ok_(isinstance(good_run.params, list))

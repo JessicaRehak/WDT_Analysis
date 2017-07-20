@@ -83,8 +83,7 @@ class SerpentRun():
         :param label: Serpent 2 output parameter
         :type label: string
 
-        :param grp: The energy group of interest or the location in the
-                    flattened matrix. This is ENERGY GROUP not the entry
+        :param grp: The energy group of interest. This is ENERGY GROUP not the entry
                     in the vector.
         :type grp: int
 
@@ -92,3 +91,32 @@ class SerpentRun():
         return np.array([file.get_data(label, err=True)[0][grp - 1]
                          for file in self.files])
         
+    def fom(self, label, grp, cpu=True, cap=np.inf):
+        """ Returns an array with the calculated FOM for a given Serpent 2
+        output parameter and group number. Calculated using the CPU time
+        or cycle number.
+
+        :param label: Serpent 2 output parameter
+        :type label: string
+
+        :param grp: The energy group of interest. This is ENERGY GROUP not the entry
+                    in the vector.
+        :type grp: int
+
+        :param cpu: If True (default), calculates the FOM using the cpu time.
+                    Otherwise uses the cycle number.
+        :type cpu: bool
+
+        :param cap: Upper cap on the cycle number for data.
+        :type cap: float
+
+        """
+
+        end = np.shape(self.cycles[self.cycles < cap])[0]
+        
+        return self.__fom__(self.get_error(label, grp),
+                            (self.cpus if cpu else self.cycles))[:end]
+
+    def __fom__(self, error, time):
+        """ Calc cpu given error and time """
+        return np.power(np.multiply(np.power(error,2), time),-1)

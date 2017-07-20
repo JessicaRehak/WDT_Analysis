@@ -84,3 +84,20 @@ class TestClass:
 
         ok_(np.all(self.error1 == self.test_run.get_error('TEST_VAL',1))) # Err grp 1
         ok_(np.all(self.error2 == self.test_run.get_error('TEST_VAL',2))) # Err grp 2
+
+    ## ==================== FOM =================================
+
+    def test_calc_fom_cpu(self):
+        """ SerpentRun calc_fom should return correct fom using cpu time """
+        fom = np.power(np.multiply(np.power(self.error1,2), self.cpu),-1)
+        ok_(np.all(fom == self.test_run.fom('TEST_VAL',1)))
+
+    def test_calc_fom_cycles(self):
+        """ SerpentRun calc fom should return correct fom using cycle time """
+        fom = np.power(np.multiply(np.power(self.error1,2), self.cycles),-1)
+        ok_(np.all(fom == self.test_run.fom('TEST_VAL',1, cpu=False)))
+
+    def test_calc_fom_cap(self):
+        """ SerpentRun calc_fom should return correct fom when capped """
+        fom = np.power(np.multiply(np.power(self.error1,2), self.cpu),-1)[:2]
+        ok_(np.all(fom == self.test_run.fom('TEST_VAL',1, cap=25)))

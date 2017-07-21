@@ -84,21 +84,15 @@ class SerpentRun():
             ret_str += '\t' + str(tup[0]) + ':\t' + str(tup[1]) + '\n'
         return ret_str[:-1]
 
-    def get_error(self, label, grp):
-        """ Returns an array with the value or error for a given
-        Serpent 2 output parameter and group number
-
-        :param label: Serpent 2 output parameter
-        :type label: string
-
-        :param grp: The energy group of interest. This is ENERGY GROUP not the entry
-                    in the vector.
-        :type grp: int
-
-        """
-        return np.array([file.get_data(label, err=True)[0][grp - 1]
-                         for file in self.files])
+    def cyc_v_cpu(self):
+        """ Returns an array with the differential cycles/cpu between
+        each file. This array will be of a dimension one less than the
+        number of files. """
+        cyc = np.subtract(self.cycles[1:], self.cycles[:-1])
+        cpu = np.subtract(self.cpus[1:], self.cpus[:-1])
+        return np.divide(cyc, cpu)
         
+       
     def fom(self, label, grp, cpu=True, cap=np.inf):
         """ Returns an array with the calculated FOM for a given Serpent 2
         output parameter and group number. Calculated using the CPU time
@@ -133,6 +127,46 @@ class SerpentRun():
         """
         return self.cyc_cpu * self.fom(label, grp, cpu=False, cap=cap)
 
+    def fom_std(self, *args, **kwargs):
+        """ Calculates the standard deviation using half the data points (after
+        application of cap if desired for the given label and group
+        number
+
+        :Keyword Arguments: same as for :func:`~analysis.wdt.SerpentRun.fom`
+        
+        """
+        fom = self.fom(*args, **kwargs)
+        return self.__std__(fom)
+
+    def fom_std_corr(self, *args, **kwargs):
+        """ Calculates the std deviation using half the data points of the
+        _corrected_ FOM
+
+        :Arguments: same as for :func:`~analysis.wdt.SerpentRun.fom_corr`
+        """
+        fom = self.fom_corr(*args, **kwargs)
+        return self.__std__(fom)
+    
+    def get_error(self, label, grp):
+        """ Returns an array with the value or error for a given
+        Serpent 2 output parameter and group number
+
+        :param label: Serpent 2 output parameter
+        :type label: string
+
+        :param grp: The energy group of interest. This is ENERGY GROUP not the entry
+                    in the vector.
+        :type grp: int
+
+        """
+        return np.array([file.get_data(label, err=True)[0][grp - 1]
+                         for file in self.files])
+    
     def __fom__(self, error, time):
         """ Calc cpu given error and time """
         return np.power(np.multiply(np.power(error,2), time),-1)
+
+    def __std__(self, fom, start=0):
+        if not start:
+            start = int(np.floor(len(fom)/2.0))
+        return np.std(fom[start:])

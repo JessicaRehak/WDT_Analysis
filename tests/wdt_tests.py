@@ -108,3 +108,25 @@ class TestClass:
         self.test_run.cyc_cpu = 2.0
         fom = np.power(np.multiply(np.power(self.error1,2), self.cycles),-1) * 2.0
         ok_(np.all(fom == self.test_run.fom_corr('TEST_VAL',1)))
+
+    ## ==================== FOM_VAR ==================================
+
+    def test_fom_var(self):
+        """ SerpentRun fom_var should return the correct variance """
+        std = 1029588.1647341051
+        ok_(np.isclose(std, self.test_run.fom_std('TEST_VAL',1)))
+
+    ## ==================== FOM_VAR_CORR =============================
+
+    def test_fom_var_corr(self):
+        """ SerpentRun fom_var_corr should return the correct variance """
+        self.test_run.cyc_cpu = 2.0
+        std = 2083333.3333333349
+        ok_(np.isclose(std, self.test_run.fom_std_corr('TEST_VAL',1)))
+
+    ## ==================== CYC_V_CPU ================================
+
+    def test_cyc_v_cpu(self):
+        """ SerpentRun cyc_v_cpu should return the correct values """
+        cyc_v_cpu = np.array([1,1])
+        ok_(np.all(cyc_v_cpu == self.test_run.cyc_v_cpu()))

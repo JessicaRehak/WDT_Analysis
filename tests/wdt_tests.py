@@ -4,7 +4,20 @@ import analysis.wdt as wdt
 import numpy as np
 import os
 
-class TestClass:
+class TestMultiRun:
+    @classmethod
+    def setup_class(cls):
+        cls.base_dir = './tests/fom_data'
+        cls.test_multi = wdt.MultiRun([cls.base_dir, cls.base_dir],
+                                      [{'param':0.1},{'param':0.2}])
+
+    @raises(AssertionError)
+    def test_init_dirsparams(self):
+        """ MultiRun init should throw AssertionError if number of directories
+        doesn't match the number of params """
+        bad_multi = wdt.MultiRun([self.base_dir],[{'param':0.1},{'param':0.2}])
+
+class TestSerpentRun:
 
     @classmethod
     def setup_class(cls):
@@ -59,13 +72,9 @@ class TestClass:
     @raises(AssertionError)
     def test_init_params(self):
         """ SerpentRun init should throw assertion error if params
-        are not a tuple or list of tuples """
-        bad_run = wdt.SerpentRun(self.base_dir, params=[1,("str",1)])
-
-    def test_init_param_list(self):
-        """ SerpentRun init should cast params into a list """
-        good_run = wdt.SerpentRun(self.base_dir, params=('test',0.1))
-        ok_(isinstance(good_run.params, list))
+        are not a dict """
+        bad_run = wdt.SerpentRun(self.base_dir, params=1)
+        bad_run = wdt.SerpentRun(self.base_dir, params=(1,1))
 
     def test_init_cycles(self):
         """ SerpentRun init should create cycles list with proper values """
@@ -75,6 +84,13 @@ class TestClass:
         """ SerpentRun init should create cycles list with proper values """
         ok_(np.all(self.test_run.cpus == self.cpu))
 
+    ## ==================== GET_PARAM ================================
+
+    def test_get_param(self):
+        """ SerpentRun get_param should return the value """
+        newRun = wdt.SerpentRun(self.base_dir, params={'param': 0.1})
+        eq_(newRun.get_param('param'),0.1)
+                                
 
     ## ==================== GET_DATA =================================
     

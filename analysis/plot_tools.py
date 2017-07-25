@@ -1,8 +1,120 @@
+"""
+
+.. module:: plot_tools
+     :synopsis: Tools for plotting FOM analysis parameters.
+
+.. moduleauthor:: Joshua Rehak <jsrehak@berkeley.edu>
+
+"""
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-import core
-import fom
+import wdt as wdt
+
+class Plotter():
+    def __init__(self, save=False, savedir=""):
+        self.save = save
+        self.savedir = savedir
+
+    def multi_ratio(self, multirun, param, base, corr=True, font_size=12,
+                             label_size=12, **kwargs):
+        try:
+            x = np.array([run.params[param] for run in multirun.runs
+                          if run.params[param] != base])
+            x_base = np.array([run.params[param] for run in multirun.runs
+                               if run.params[param] == base])
+            if corr:
+                y = np.array([run.fom_corr(**kwargs)[-1] for run in multirun.runs
+                          if run.params[param] != base])
+                y_base = np.array([run.fom_corr(**kwargs)[-1] for run in multirun.runs
+                               if run.params[param] == base])
+            else:
+                y = np.array([run.fom(**kwargs)[-1] for run in multirun.runs
+                          if run.params[param] != base])
+                y_base = np.array([run.fom(**kwargs)[-1] for run in multirun.runs
+                               if run.params[param] == base])
+            assert len(y_base) > 0, "Base case not found"
+            y = np.hstack((y_base, y))/y_base[0]
+            x = np.hstack((x_base, x))
+            ax = self.__setup__(font_size, label_size)
+            plt.plot(x,y, '.k', markersize=10)
+            plt.ylabel('$\mathrm{FOM}_{\mathrm{norm}}$', fontsize=label_size)
+            plt.xlabel(str(param), fontsize=label_size)
+            return plt.gcf()
+        except KeyError:
+            print("Bad parameter name")
+        
+    def plot_fom(self, run, font_size=12, label_size=12, cpu=True,
+                 std=True, **kwargs):
+        """ Plot figure of merit for a SerpentRun """
+        assert isinstance(run, wdt.SerpentRun), "must pass a SerpentRun object"
+        
+        # Get data
+        fom = run.fom(cpu=cpu, **kwargs)
+        if std:
+            std = run.fom_std(cpu=cpu, **kwargs)
+
+        # Plot
+        self.__fom_plot__(run, fom, font_size, label_size, std, cpu=cpu,
+                          **kwargs)
+        return plt.gcf()
+
+    def plot_fom_corr(self, run, font_size=12, label_size=12,
+                      std=True, **kwargs):
+        """ Plot corrected figure of merit for a SerpentRun """
+        assert isinstance(run, wdt.SerpentRun), "must pass a SerpentRun object"
+        
+        # Get data
+        fom = run.fom_corr(**kwargs)
+        if std:
+            std = run.fom_std_corr(**kwargs)
+        # Plot
+        self.__fom_plot__(run, fom, font_size, label_size, std, cpu=False,
+                          **kwargs)
+        return plt.gcf()
+
+    def plot_cyc_v_cpu(self, run, font_size=12, label_size=12):
+        ax = self.__setup__(font_size, label_size)
+        y = run.cyc_v_cpu()
+        plt.plot(y, '.k')
+        plt.ylabel('Cycles/CPU', fontsize=label_size)
+        plt.xlabel('Files')
+        return plt.gcf()
+    
+    def __fom_plot__(self, run, fom, font_size, label_size, std, cpu=False,
+                     **kwargs):
+        ax = self.__setup__(font_size, label_size)
+        
+        try:
+            end = np.shape(run.cycles[run.cycles < kwargs['cap']])[0]
+            x = run.cycles[:end]
+        except KeyError:
+            x = run.cycles
+            
+        plt.plot(x,fom,'.k')
+        if std:
+            plt.axhline(y=fom[-1] - std, ls='--', c='k')
+            plt.axhline(y=fom[-1] + std, ls='--', c='k')
+        ax.yaxis.get_major_formatter().set_powerlimits((0, 1))
+        ylabel = 'Figure of merit (' + ('CPU)' if cpu else 'cycles)')
+        plt.ylabel(ylabel, fontsize=label_size)
+        plt.xlabel('$n$', fontsize=label_size)
+        plt.xscale('linear')
+
+    def __setup__(self, font_size, label_size):
+        plt.clf
+        plt.figure(figsize=(12,9))
+        plt.rc('text', usetex=True)
+        plt.rc('font', family='serif')    
+        ax = plt.gca()
+        plt.rc('font', size=font_size)
+        plt.xticks(fontsize=font_size)
+        plt.yticks(fontsize=font_size)
+        ax.tick_params(axis='y', labelsize=font_size)
+        plt.grid(True,which='both',color='0.5')
+        return ax
 
 def fom_plot_setup(font_size=32, label_size=32):
     plt.rc('text', usetex=True)
@@ -114,20 +226,6 @@ def plot_title(label, grp, casename):
         
     title = casename + param + 'for the ' + group + " group"
     return title
-
-def plot_fom(comparator, casename, label, grp, save=False, fontsize=20, cycle_caps=[], corr=False):
-   
-    title = plot_title(label, grp, casename)
-    
-    x, y, yerr = get_fom(comparator, label, grp, cycle_caps = cycle_caps, corr = corr)
-    
-    plt.figure(figsize=(12,9))
-    plt.errorbar(x,y,yerr=yerr, fmt='k.',ms=12)
-    plt.title(title)
-    fom_plot_setup(fontsize,fontsize)
-    plt.xlim([0.05,1.05])
-    plt.xticks(np.arange(0.1,1.1, 0.1))
-    plt.show()
 
 def plot_ratios(comparator, casename, label, grp, cycle_caps=[], corr=False,
                 save=False, fontsize=20, img_dir='~/'):

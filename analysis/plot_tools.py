@@ -18,33 +18,86 @@ class Plotter():
         self.save = save
         self.savedir = savedir
 
-    def multi_ratio(self, multirun, param, base, corr=True, font_size=12,
-                             label_size=12, **kwargs):
+    def ratio(self, multirun, param, base, corr=True, caps=[], **kwargs):
         try:
-            x = np.array([run.params[param] for run in multirun.runs
-                          if run.params[param] != base])
-            x_base = np.array([run.params[param] for run in multirun.runs
-                               if run.params[param] == base])
+            x = [run.params[param] for run in multirun.runs]
+
             if corr:
-                y = np.array([run.fom_corr(**kwargs)[-1] for run in multirun.runs
-                          if run.params[param] != base])
-                y_base = np.array([run.fom_corr(**kwargs)[-1] for run in multirun.runs
-                               if run.params[param] == base])
+                fom_func = wdt.SerpentRun.fom_corr
+                std_func = wdt.SerpentRun.fom_std_corr
             else:
-                y = np.array([run.fom(**kwargs)[-1] for run in multirun.runs
-                          if run.params[param] != base])
-                y_base = np.array([run.fom(**kwargs)[-1] for run in multirun.runs
-                               if run.params[param] == base])
-            assert len(y_base) > 0, "Base case not found"
-            y = np.hstack((y_base, y))/y_base[0]
-            x = np.hstack((x_base, x))
-            ax = self.__setup__(font_size, label_size)
-            plt.plot(x,y, '.k', markersize=10)
-            plt.ylabel('$\mathrm{FOM}_{\mathrm{norm}}$', fontsize=label_size)
-            plt.xlabel(str(param), fontsize=label_size)
-            return plt.gcf()
+                fom_func = wdt.SerpentRun.fom
+                std_func = wdt.SerpentRun.fom_std
+
+            n = x.index(base)
+
+            y = []
+            yerr = []
+
+            cap_array = np.inf*np.ones_like(x)
+            for cap in caps:
+                cap_n = x.index(cap[0])
+                cap_array[cap_n] = cap[1]
+            
+            y = np.array([fom_func(run, cap=cap_array[i],
+                                   **kwargs)[-1] for i, run in enumerate(multirun.runs)])
+            yerr = np.array([std_func(run, cap=cap_array[i],
+                                      **kwargs) for i, run in enumerate(multirun.runs)])
+            
+            r = np.ones_like(x)
+            rerr = np.zeros_like(x)
+
+            for i in range(0,len(x)):
+                if i != n:
+                    r[i] = y[i]/y[n]
+                    rerr[i] = r[i]*np.sqrt(np.power(yerr[i]/y[i],2) 
+                                           + np.power(yerr[n]/y[n],2))
+            x = np.array(x)            
+            return x, y, yerr, r, rerr
+    
         except KeyError:
             print("Bad parameter name")
+
+    def plot_ratio(self, multirun, grp, font_size=12, label_size=12, ms = 10,
+                   **kwargs):
+        if not isinstance(grp,list):
+            grp = [grp]
+            
+        ax = self.__setup__(font_size, label_size)
+        
+        for g in grp:
+            x, y, yerr, r, rerr = self.ratio(multirun, grp = g, **kwargs)
+            plt.errorbar(x ,r, yerr=rerr, fmt='.k', ms=ms, capsize=0)
+            
+        plt.ylabel('$\mathrm{FOM}_{\mathrm{norm}}$', fontsize=label_size)
+        plt.xlabel(str(kwargs['param']), fontsize=label_size)
+        plt.axhline(y=1.0, ls='--', c='k')
+        plt.xticks(x)
+        plt.xlim([x[0]-(x[1]-x[0])/2.0, x[-1]+(x[1]-x[0])/2.0])
+        return plt.gcf()
+
+    def ratio_table(self, multirun, fom_p, rat_p, **kwargs):
+        x, y, yerr, r, rerr = self.ratio(multirun, **kwargs)
+        d = {'twdt' : x, 'fom' : y, 'fom_err': yerr, 'r' : r, 'r_err' : rerr}
+        df = pd.DataFrame(d)
+        #Move twdt to the front
+        cols = df.columns.tolist()
+        cols = cols[-1:] + cols[:-1]
+        df = df[cols]
+
+        def fom_form(x):
+            return '{:.0f}'.format(np.around(x/np.power(10,fom_p)))
+        def ratio(x):
+            fs = '{:.' + str(rat_p) + 'f}'
+            return fs.format(x)
+        
+        df['fom'] = df['fom'].apply(fom_form)
+        df['fom_err'] = df['fom_err'].apply(fom_form)
+        df['r']  = df['r'].apply(ratio)
+        df['r_err']  = df['r_err'].apply(ratio)
+        return df
+        #return df.to_latex(index=False, escape=False, column_format='rrrrr')
+
         
     def plot_fom(self, run, font_size=12, label_size=12, cpu=True,
                  std=True, **kwargs):
@@ -104,8 +157,8 @@ class Plotter():
         plt.xscale('linear')
 
     def __setup__(self, font_size, label_size):
-        plt.clf
-        plt.figure(figsize=(12,9))
+        #plt.clf
+        #plt.figure(figsize=(12,9))
         plt.rc('text', usetex=True)
         plt.rc('font', family='serif')    
         ax = plt.gca()
@@ -230,17 +283,22 @@ def plot_title(label, grp, casename):
 def plot_ratios(comparator, casename, label, grp, cycle_caps=[], corr=False,
                 save=False, fontsize=20, img_dir='~/'):
         
-    title = plot_title(label, grp, casename)
+    #title = plot_title(label, grp, casename)
     filename = casename.lower() + '_' + label.lower() + '_' + str(grp)
 
-    x, r, rerr = get_ratios(comparator, label, grp, cycle_caps, corr)
+    if not isinstance(grp,list):
+        grp = [grp]
 
     plt.figure(figsize=(12,9))
-    plt.errorbar(x,r,yerr=rerr, fmt='k.', ms=12, capsize=0)
+    
+    for g in grp:
+        x, r, rerr = get_ratios(comparator, label, cycle_caps, corr, grp=g)
+        plt.errorbar(x,r,yerr=rerr, fmt='k.', ms=12, capsize=0)
+        
     fom_plot_setup(fontsize,fontsize)
     plt.xticks(np.arange(0.1,1.1, 0.1))
     plt.xlim([0.15,1.05])
-    plt.title(title)
+    #plt.title(title)
     plt.ylabel('Normalized FOM')
     plt.xlabel('$t_{\mathrm{wdt}}$', fontsize=fontsize+4)
     plt.axhline(y=1.0, ls='--', c='k')

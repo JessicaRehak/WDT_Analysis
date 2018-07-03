@@ -174,13 +174,22 @@ class SerpentRun():
         :type label: string
 
         :param grp: The energy group of interest. This is ENERGY GROUP not the entry
-                    in the vector.
-        :type grp: int
+                    in the vector. If this is a list, it will sum the
+                    errors in those groups before returning the value
+                    (collapsed error).
+        :type grp: int or list(int)
 
         """
-        return np.array([file.get_data(label, err=True)[0][grp - 1]
+        if not isinstance(grp, list):
+            grp = [grp]
+
+        err = 0
+        for g in grp:
+            err += np.array([file.get_data(label, err=True)[0][g - 1]
                          for file in self.files])
 
+        return err
+    
     def get_param(self, param):
         return self.params[param]
     

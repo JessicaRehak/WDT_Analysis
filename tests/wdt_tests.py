@@ -101,6 +101,13 @@ class TestSerpentRun:
         ok_(np.all(self.error1 == self.test_run.get_error('TEST_VAL',1))) # Err grp 1
         ok_(np.all(self.error2 == self.test_run.get_error('TEST_VAL',2))) # Err grp 2
 
+    def test_get_collapsed_error(self):
+        """ SerpentRun get_error should return the correct collapsed
+        errors.
+        """
+        ok_(np.all((self.error1 + self.error2) ==
+                   self.test_run.get_error('TEST_VAL', [1,2])))
+        
     ## ==================== FOM =================================
 
     def test_calc_fom_cpu(self):
